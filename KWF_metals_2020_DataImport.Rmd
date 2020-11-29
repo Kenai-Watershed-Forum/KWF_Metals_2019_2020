@@ -1,0 +1,409 @@
+---
+title: "KWF_metals_2020"
+output:
+  html_document: 
+    df_print: paged
+    fig_width: 10
+    fig_height: 6
+    fig_caption: yes
+    code_folding: hide
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+editor_options: 
+  chunk_output_type: inline
+---
+
+Document last updated `r Sys.time()` by Benjamin Meyer (benjamin.meyer.ak@gmail.com)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+# clear environment
+rm(list=ls())
+
+# load packages
+library(tidyverse)
+library(lubridate)
+library(readr)
+library(readxl)
+library(writexl)
+library(hms)
+library(plotly)
+library(DT)
+library(xlsx)
+library(leaflet)
+library(DT)
+library(ggpubr)
+```
+
+<br>
+
+This draft document contains preliminary data explorations of 2019-2020 copper and zinc water quality data from the Kenai River Watershed.
+
+<br>
+
+Notes:
+
+* In the future it will be much better to read in final data directly from the EPA institutional archive, in its most static version.  I found Cu, Zn, Mg, and Ca data pre-2013 at https://www.waterqualitydata.us/portal/, but did not yet find 2013-2020 data there.
+
+* Specific query used: https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult
+
+* Where are the rest of the years archived? Do they need to be submitted AQMS?  Maybe use a different query?
+
+* In cases 2019 where hardness data not available, data from nearest sampling event was used instead.
+
+<br>
+
+***
+
+### Data Read in and preparation
+
+Read in results columns directly from tabs "FINALREPORT_ZnCuSampling_19-20" and "FINALREPORT_Baseline_19-20" in the Excel document "AllData_ZnCuCaMg_19-20.xlsx" prepared by MH in Fall 2020
+```{r}
+# specify file paths and sheet names
+workbook <- "data/AllData_ZnCuCaMg_19-20.xlsx"
+zn_cu_fnl <- "FINALREPORT_ZnCuSampling_19-20"
+baseline_fnl <- "FINALREPORT_Baseline_19-20"
+
+# read in tabs
+zn_cu_fnl <- read_excel(workbook, sheet = zn_cu_fnl, skip = 4) 
+baseline_fnl <- read_excel(workbook, sheet = baseline_fnl, skip = 4)
+
+# join dataframes
+tbl <- bind_rows(zn_cu_fnl,baseline_fnl)
+
+# assign new column names
+vars <- c("site","rm","date","waterbody_type","hardness_mgL","copper_ugL","copper_ccc_ugL","zinc_ugL","zinc_ccc_ugL")
+colnames(tbl) <- vars
+
+# create numerical columns and clean data table
+tbl <- tbl%>%
+  select(-rm) %>%
+  filter(!is.na(date)) %>%
+  fill(site) %>%
+  
+  # hardness
+  separate(hardness_mgL, sep = " ", into = c("hardness_mgL_1","hardness_mgL_2"), remove = F) %>%
+  mutate(hardness_mgL_2 = gsub("[()]", "", hardness_mgL_2)) %>%
+  
+  # copper
+  mutate(copper_ugL_x = gsub("[()]", "", copper_ugL)) %>%
+  mutate(copper_ugL_x = gsub("J", "", copper_ugL_x)) %>%
+  mutate(copper_ugL_x = gsub("U", "", copper_ugL_x)) %>%
+  mutate(copper_ugL_x = str_replace(copper_ugL_x, "\\s", "|")) %>% 
+  ### replace first white space with consistent character and split on that character
+  separate(copper_ugL_x, into = c("copper_ugL_1", "copper_ugL_2"), sep = "\\|") %>%
+  
+  # copper CCC
+  mutate(copper_ccc_ugL_x = gsub("[()]", "", copper_ccc_ugL)) %>%
+  mutate(copper_ccc_ugL_x = gsub("J", "", copper_ccc_ugL_x)) %>%
+  mutate(copper_ccc_ugL_x = gsub("U", "", copper_ccc_ugL_x)) %>%
+  mutate(copper_ccc_ugL_x = str_replace(copper_ccc_ugL_x, "\\s", "|")) %>% 
+  ### replace first white space with consistent character and split on that character
+  separate(copper_ccc_ugL_x, into = c("copper_ccc_ugL_1", "copper_ccc_ugL_2"), sep = "\\|") %>%
+  
+  # zinc
+  mutate(zinc_ugL_x = gsub("[()]", "", zinc_ugL)) %>%
+  mutate(zinc_ugL_x = gsub("J", "", zinc_ugL_x)) %>%
+  mutate(zinc_ugL_x = gsub("U", "", zinc_ugL_x)) %>%
+  mutate(zinc_ugL_x = str_replace(zinc_ugL_x, "\\s", "|")) %>% 
+  ### replace first white space with consistent character and split on that character
+  separate(zinc_ugL_x, into = c("zinc_ugL_1", "zinc_ugL_2"), sep = "\\|") %>%
+  
+  # zinc CCC
+  mutate(zinc_ccc_ugL_x = gsub("[()]", "", zinc_ccc_ugL)) %>%
+  mutate(zinc_ccc_ugL_x = gsub("J", "", zinc_ccc_ugL_x)) %>%
+  mutate(zinc_ccc_ugL_x = gsub("U", "", zinc_ccc_ugL_x)) %>%
+  mutate(zinc_ccc_ugL_x = str_replace(zinc_ccc_ugL_x, "\\s", "|")) %>% 
+  ### replace first white space with consistent character and split on that character
+  separate(zinc_ccc_ugL_x, into = c("zinc_ccc_ugL_1", "zinc_ccc_ugL_2"), sep = "\\|") %>%
+  
+  # select desired columns
+  select("site","date","waterbody_type",
+         "hardness_mgL_1","hardness_mgL_2",
+         "copper_ugL_1","copper_ugL_2","copper_ccc_ugL_1","copper_ccc_ugL_2",
+         "zinc_ugL_1","zinc_ugL_2","zinc_ccc_ugL_1","zinc_ccc_ugL_2") %>%
+  
+  # transform numbers to numeric column classes
+  mutate_at(c("hardness_mgL_1","hardness_mgL_2",
+         "copper_ugL_1","copper_ugL_2","copper_ccc_ugL_1","copper_ccc_ugL_2",
+         "zinc_ugL_1","zinc_ugL_2","zinc_ccc_ugL_1","zinc_ccc_ugL_2"), 
+         as.numeric) %>%
+  
+  # modify site names
+  mutate(site = as.factor(str_replace_all(site," ","_"))) %>%
+  mutate(site = as.factor(str_replace_all(site,"-","_"))) %>%
+  mutate(site = as.factor(str_replace_all(site,"'","")))
+
+```
+
+<br>
+
+Calculate RDL values for Zn and Cu duplicate samples
+```{r}
+tbl <- tbl %>%
+  ## copper rdl
+  mutate(cu_rdl = paste(sprintf((abs(copper_ugL_1 - copper_ugL_2) / ((copper_ugL_1 + copper_ugL_2) / 2)*100), fmt = '%#.2f'),"%")) %>%
+  mutate(cu_rdl = str_replace(cu_rdl, "NA %", "")) %>%
+  
+  # zinc rdl
+  mutate(zn_rdl = paste(sprintf((abs(zinc_ugL_1 - zinc_ugL_2) / ((zinc_ugL_1 + zinc_ugL_2) / 2)*100), fmt = '%#.2f'),"%")) %>%
+  mutate(zn_rdl = str_replace(zn_rdl, "NA %", ""))
+  
+```
+
+<br>
+
+***
+
+### Table
+
+```{r}
+# read in coordinates
+coords <- read_excel("data/Sampling sites 2020.xlsx", sheet = "BM_format_Sites2020") %>%
+  rename(site = Site) %>%
+  transform(site = as.factor(site))
+
+# join coordinates to data
+tbl <- left_join(tbl,coords)
+
+# present table
+datatable(tbl,
+          filter = 'top', 
+          options = list(pageLength = 5, autoWidth = TRUE))
+
+```
+
+<br>
+
+***
+
+### Map
+
+Show sampling sites and raw data on an ArcGIS Online map (also at https://arcg.is/0rKbbr)
+```{r}
+# used arcgis online from csv exported here
+write.csv(tbl, "output/CuZn_2019_2020_results.csv", row.names = F)
+
+# viewable at https://arcg.is/0rKbbr
+
+```
+
+<br>
+
+2019 - 2020 Cu and Zn sampling sites
+
+<br>
+
+<style>.embed-container {position: relative; padding-bottom: 80%; height: 0; max-width: 100%;} .embed-container iframe, .embed-container object, .embed-container iframe{position: absolute; top: 0; left: 0; width: 100%; height: 100%;} small{position: absolute; z-index: 40; bottom: 0; margin-bottom: -15px;}</style><div class="embed-container"><iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" title="Copper and Zinc Sampling 2019-2020" src="//www.arcgis.com/apps/Embed/index.html?webmap=b412c05eb1b0492f95f4667e7c86c7c5&extent=-151.3062,60.4157,-150.5832,60.6518&home=true&zoom=true&previewImage=false&scale=true&search=true&searchextent=true&legend=true&basemap_gallery=true&disable_scroll=true&theme=light"></iframe></div>
+
+<br>
+
+***
+
+### Plots
+
+Prep tables for plotting
+```{r}
+# prep table
+
+# strategy to prep for ggplot (e.g. "long form": break up in to minimum tables and use joins to rebuild min rows?
+tbl <- tbl %>%
+  select(site, date, waterbody_type, 
+         starts_with(c("copper","cu","zinc","zn")),
+         Lat, Long, BM_Notes) 
+
+# rdl table
+rdl_tbl <- tbl %>% 
+  select(site,date,contains("rdl")) %>%
+  filter(zn_rdl != "") %>%
+  pivot_longer(contains("rdl"),names_to = "rdl", values_to = "rdl_val") %>%
+  mutate(metal = gsub("_rdl","",rdl)) %>%
+  select(-rdl)
+
+# ccc table
+ccc_tbl <- tbl %>%
+  select(site,date,contains("ccc")) %>%
+  pivot_longer(contains("ccc"), values_to = "ccc_val") %>% 
+  filter(!is.na(ccc_val)) %>%
+  mutate(metal = gsub("copper","cu",name)) %>%
+  mutate(metal = gsub("zinc","zn",metal)) %>%
+  mutate(metal = gsub("_ccc_ugL_1","",metal)) %>%
+  mutate(metal = gsub("_ccc_ugL_2","",metal)) %>%
+  select(-name)
+
+# metal values observations
+met_obs <- c("copper_ugL_1","copper_ugL_2","zinc_ugL_1","zinc_ugL_2")
+met_tbl <- tbl %>%
+  select(site,date,all_of(met_obs)) %>%
+  pivot_longer(met_obs, names_to = "metal", values_to = "met_val") %>%
+  filter(!is.na(met_val)) %>%
+  mutate(metal = gsub("copper","cu",metal)) %>%
+  mutate(metal = gsub("zinc","zn",metal)) %>%
+  mutate(metal = gsub("_ugL_1","",metal)) %>%
+  mutate(metal = gsub("_ugL_2","",metal)) %>%
+  distinct()
+
+  
+# join tables in long form
+tbl2 <- inner_join(met_tbl,ccc_tbl) %>%
+  left_join(rdl_tbl) %>%
+  left_join(coords)
+
+```
+
+
+<br>
+
+
+#### Tributary site plots
+```{r}
+# specify facet orders
+## tributaries
+trib_order <- c("No_Name_Creek",
+                "Beaver_Creek",
+                "Slikok_Creek",
+                "Soldotna_Creek",
+                "Funny_River")
+tbl2_trib <- tbl2 %>% filter(Habitat == "Tributary")
+tbl2_trib$site <- factor(tbl2_trib$site, levels = trib_order)
+
+
+# specify common ggplot theme here
+
+
+# create separate charts with different y axes for each metal
+cu_trib <- tbl2_trib%>%
+  filter(metal == "cu") %>%
+  ggplot() +
+  geom_point(aes(as.factor(date),as.numeric(met_val), color = metal)) +
+  scale_color_manual(values = c("cu" = "red")) +
+  geom_point(aes(as.factor(date),as.numeric(ccc_val)), shape = 95, size = 3) +
+  facet_grid(.~site, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_blank(),
+        strip.background.x = element_blank(),
+        strip.text.x = element_text(face = "bold"),
+        legend.position = "none") +
+  xlab("") +
+  ylab("") +
+  ylim(0,10)
+cu_trib <-  annotate_figure(cu_trib,right = text_grob("Cu", color = "Red", 
+                                 face = "bold", size = 14, rot = 0))
+
+zn_trib <- tbl2_trib %>%
+  filter(metal == "zn") %>%
+  ggplot() +
+  geom_point(aes(as.factor(date),as.numeric(met_val))) +
+  geom_point(aes(as.factor(date),as.numeric(ccc_val)), shape = 95, size = 3) +
+  facet_grid(.~site, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1),
+        strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  xlab("") +
+  ylab("") +
+  ylim(0,175)
+zn_trib <-  annotate_figure(zn_trib,right = text_grob("Zn", color = "black", 
+                                 face = "bold", size = 16, rot = 0))
+
+# arrange 2 charts together
+p <- ggarrange(cu_trib,zn_trib,nrow = 2)
+annotate_figure(p,
+                top = text_grob("Kenai River Tributary Sites", 
+                                color = "black", face = "bold", size = 18),
+                left = text_grob("Concentration (ug/L)", color = "black", 
+                                 face = "bold", size = 16, rot = 90),
+                fig.lab = "— = CCC",
+                fig.lab.pos = "bottom.right",
+                fig.lab.face = "bold")
+
+# note: used ggarrange rather than ggplot facet_grid for overall because y-axis scales were different
+
+```
+
+<br>
+
+#### Mainstem site plots
+```{r}
+## mainstem
+ms_order <- c("City_of_Kenai_Docks",
+              "Cunningham_Park",
+              "Upstream_of_Beaver_Creek",
+              "Pillars",
+              "Poachers_Cove",
+              "Slikok_Creek_Kenai_River_Confluence",
+              "Soldotna_Bridge",
+              "Swiftwater_Park",
+              "Jims_Landing",
+              "Skilak_Lake_Outlet")
+
+# shorten site names
+ms_sites <- c("City_of_Kenai_Docks" = "CoK_Docks",
+              "Cunningham_Park" = "C_Park",
+              "Upstream_of_Beaver_Creek" = "Beaver",
+              "Pillars" = "Pillars",
+              "Poachers_Cove" = "Poachers",
+              "Slikok_Creek_Kenai_River_Confluence" = "Slikok",
+              "Soldotna_Bridge" = "S_Bridge",
+              "Swiftwater_Park" = "Swift",
+              "Jims_Landing" = "Jims",
+              "Skilak_Lake_Outlet" = "Skilak")
+
+tbl2_ms <- tbl2 %>% filter(Habitat == "Mainstem")
+tbl2_ms$site <- factor(tbl2_ms$site, levels = ms_order)
+
+
+# create separate charts with different y axes for each metal
+cu_ms <- tbl2_ms%>%
+  filter(metal == "cu") %>%
+  ggplot() +
+  geom_point(aes(as.factor(date),as.numeric(met_val), color = metal)) +
+  scale_color_manual(values = c("cu" = "red")) +
+  geom_point(aes(as.factor(date),as.numeric(ccc_val)), shape = 95, size = 3) +
+  facet_grid(.~site, scales = "free_y", labeller = as_labeller(ms_sites)) +
+  theme_bw() +
+  theme(axis.text.x = element_blank(),
+        strip.background.x = element_blank(),
+        strip.text.x = element_text(face = "bold"),
+        legend.position = "none") +
+  xlab("") +
+  ylab("") +
+  ylim(0,10)
+cu_ms <-  annotate_figure(cu_ms,right = text_grob("Cu", color = "Red", 
+                                 face = "bold", size = 14, rot = 0))
+
+zn_ms <- tbl2_ms %>%
+  filter(metal == "zn") %>%
+  ggplot() +
+  geom_point(aes(as.factor(date),as.numeric(met_val))) +
+  geom_point(aes(as.factor(date),as.numeric(ccc_val)), shape = 95, size = 3) +
+  facet_grid(.~site, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1, size = 8),
+        strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  xlab("") +
+  ylab("") +
+  ylim(0,175)
+zn_ms <-  annotate_figure(zn_ms,right = text_grob("Zn", color = "black", 
+                                 face = "bold", size = 16, rot = 0))
+
+# arrange 2 charts together
+p <- ggarrange(cu_ms,zn_ms,nrow = 2)
+annotate_figure(p,
+                top = text_grob("Kenai River Mainstem Sites", 
+                                color = "black", face = "bold", size = 18),
+                left = text_grob("Concentration (ug/L)", color = "black", 
+                                 face = "bold", size = 16, rot = 90),
+                fig.lab = "— = CCC",
+                fig.lab.pos = "bottom.right",
+                fig.lab.face = "bold")
+
+
+```
+
+
