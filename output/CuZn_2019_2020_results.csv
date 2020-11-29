@@ -1,0 +1,65 @@
+"site","date","waterbody_type","hardness_mgL_1","hardness_mgL_2","copper_ugL_1","copper_ugL_2","copper_ccc_ugL_1","copper_ccc_ugL_2","zinc_ugL_1","zinc_ugL_2","zinc_ccc_ugL_1","zinc_ccc_ugL_2","cu_rdl","zn_rdl","Habitat","RM","Lat","Long","BM_Notes","Other_Notes"
+"No_Name_Creek",2019-05-22,"Tributary",32.58547,NA,0.53,3.27,4.40078491869142,NA,98.1,159,39.9166826118958,NA,"144.21 %","47.37 %","Tributary",NA,60.577846,-151.268588,"Coordinates provided by MH",NA
+"No_Name_Creek",2019-07-24,"Tributary",50.84966,NA,0.39,0.61,6.43686330268534,NA,5.12,5.77,58.1978689484972,NA,"44.00 %","11.94 %","Tributary",NA,60.577846,-151.268588,"Coordinates provided by MH",NA
+"No_Name_Creek",2020-05-20,"Tributary",15.58,15.33,0.606,0.497,2.34,2.31,10.9,7.05,21.36,21.07,"19.76 %","42.90 %","Tributary",NA,60.577846,-151.268588,"Coordinates provided by MH",NA
+"No_Name_Creek",2020-07-22,"Tributary",82.32,NA,1.04,NA,9.71,NA,3.46,NA,87.53,NA,"","","Tributary",NA,60.577846,-151.268588,"Coordinates provided by MH",NA
+"Beaver_Creek",2019-05-22,"Tributary",43.06498,NA,0.5,NA,5.58483460675976,NA,77.8,NA,50.5548343243455,NA,"","","Tributary",NA,60.641201,-151.084718,"Coordinates provided by MH",NA
+"Beaver_Creek",2019-07-24,"Tributary",73.65497,NA,1.07,NA,8.83436426223786,NA,64.4,NA,79.6616903358865,NA,"","","Tributary",NA,60.641201,-151.084718,"Coordinates provided by MH",NA
+"Beaver_Creek",2020-05-20,"Tributary",15.7,15.87,0.5,0.5,2.36,2.38,5,5,21.5,21.7,"0.00 %","0.00 %","Tributary",NA,60.641201,-151.084718,"Coordinates provided by MH",NA
+"Beaver_Creek",2020-07-22,"Tributary",56.16,55.17,0.5,0.5,7.01,6.9,5,5,63.31,62.36,"0.00 %","0.00 %","Tributary",NA,60.641201,-151.084718,"Coordinates provided by MH",NA
+"Slikok_Creek_Kenai_River_Confluence",2019-05-22,"Mainstem",NA,NA,0.42,NA,NA,NA,5,NA,NA,NA,"","","Mainstem",NA,60.482752,-151.125116,"Coordinates provided by MH",NA
+"Slikok_Creek_Kenai_River_Confluence",2019-07-24,"Mainstem",NA,NA,8.16,NA,NA,NA,3.55,NA,NA,NA,"","","Mainstem",NA,60.482752,-151.125116,"Coordinates provided by MH",NA
+"Slikok_Creek_Kenai_River_Confluence",2020-05-20,"Mainstem",28.31,27.75,0.387,0.372,3.9,3.84,5,5,35.43,34.84,"3.95 %","0.00 %","Mainstem",NA,60.482752,-151.125116,"Coordinates provided by MH",NA
+"Slikok_Creek_Kenai_River_Confluence",2020-07-22,"Mainstem",50.1,45.09,0.515,0.5,6.36,5.81,5,5,57.47,52.56,"2.96 %","0.00 %","Mainstem",NA,60.482752,-151.125116,"Coordinates provided by MH",NA
+"Slikok_Creek",2019-05-22,"Tributary",38.44937,NA,0.5,NA,5.06919491011862,NA,67.6,NA,46.2188704172404,NA,"","","Tributary",NA,60.402664,-151.147385,"Coordinates provided by MH",NA
+"Slikok_Creek",2019-07-24,"Tributary",73.58306,NA,0.53,NA,8.82699361785495,NA,5,NA,79.5957871606719,NA,"","","Tributary",NA,60.402664,-151.147385,"Coordinates provided by MH",NA
+"Slikok_Creek",2020-05-20,"Tributary",20.19,19.47,0.431,0.5,2.92,2.83,69.9,9.09,26.61,25.8,"14.82 %","153.97 %","Tributary",NA,60.402664,-151.147385,"Coordinates provided by MH",NA
+"Slikok_Creek",2020-07-22,"Tributary",49.82,NA,0.5,NA,6.33,NA,5,NA,57.2,NA,"","","Tributary",NA,60.402664,-151.147385,"Coordinates provided by MH",NA
+"Soldotna_Creek",2019-05-22,"Tributary",58.94315,NA,0.5,NA,7.30275002466774,NA,48.5,NA,65.9564670624916,NA,"","","Tributary",NA,60.550828,-150.958325,"Coordinates provided by MH",NA
+"Soldotna_Creek",2019-07-24,"Tributary",81.39078,NA,0.81,NA,9.62138652237681,NA,5,NA,86.6961058182589,NA,"","","Tributary",NA,60.550828,-150.958325,"Coordinates provided by MH",NA
+"Soldotna_Creek",2020-05-20,"Tributary",38.91,39.08,0.5,0.5,5.12,5.14,5,5,46.39,46.56,"0.00 %","0.00 %","Tributary",NA,60.550828,-150.958325,"Coordinates provided by MH",NA
+"Soldotna_Creek",2020-07-22,"Tributary",49.78,NA,0.5,NA,6.32,NA,5,NA,57.16,NA,"","","Tributary",NA,60.550828,-150.958325,"Coordinates provided by MH",NA
+"Skilak_Lake_Outlet",2019-05-22,"Mainstem",32.719168,NA,0.37,NA,4.41620951055745,NA,5,NA,40.0554082440623,NA,"","","Mainstem",NA,60.468253,-150.509082,"Coordinates provided by MH",NA
+"Skilak_Lake_Outlet",2019-07-24,"Mainstem",33.2,NA,0.696,NA,4.47184786828493,NA,5,NA,40.55577446164,NA,"","","Mainstem",NA,60.468253,-150.509082,"Coordinates provided by MH",NA
+"Skilak_Lake_Outlet",2020-05-20,"Mainstem",28.68,28.38,0.341,0.327,3.95,3.91,3.41,5,35.83,35.51,"4.19 %","37.81 %","Mainstem",NA,60.468253,-150.509082,"Coordinates provided by MH",NA
+"Skilak_Lake_Outlet",2020-07-22,"Mainstem",33.59,NA,0.313,NA,4.52,NA,5,NA,40.95,NA,"","","Mainstem",NA,60.468253,-150.509082,"Coordinates provided by MH",NA
+"Jims_Landing",2019-05-22,"Mainstem",42.94095,NA,0.5,NA,5.57108735256244,NA,5,NA,50.4314392041381,NA,"","","Mainstem",NA,60.481351,-150.115484,"Coordinates provided by MH",NA
+"Jims_Landing",2019-07-24,"Mainstem",40.07,NA,0.643,NA,5.25129686546259,NA,5,NA,47.5602674385777,NA,"","","Mainstem",NA,60.481351,-150.115484,"Coordinates provided by MH",NA
+"Jims_Landing",2020-05-20,"Mainstem",37.7,36,0.472,0.447,4.98,4.79,5,5,45.16,43.43,"5.44 %","0.00 %","Mainstem",NA,60.481351,-150.115484,"Coordinates provided by MH",NA
+"Jims_Landing",2020-07-22,"Mainstem",42.77,NA,0.496,NA,5.55,NA,5,NA,50.26,NA,"","","Mainstem",NA,60.481351,-150.115484,"Coordinates provided by MH",NA
+"No_Name_Creek",2019-04-30,"Tributary",32.59,NA,0.668,NA,4.4,NA,21.3,NA,39.92,NA,"","","Tributary",NA,60.577846,-151.268588,"Coordinates provided by MH",NA
+"No_Name_Creek",2019-07-30,"Tributary",51.22,50.85,0.451,3.04,6.48,6.44,5.53,5.31,58.56,58.2,"148.32 %","4.06 %","Tributary",NA,60.577846,-151.268588,"Coordinates provided by MH",NA
+"No_Name_Creek",2020-07-21,"Tributary",49.86,1579.89,0.5,1.79,6.33,121.31,5,3.75,57.24,1069.95,"112.66 %","28.57 %","Tributary",NA,60.577846,-151.268588,"Coordinates provided by MH",NA
+"City_of_Kenai_Docks",2019-04-30,"Mainstem",842.68,374.19,2.49,1.68,70.9,35.43,89.9,110,628.18,315.75,"38.85 %","20.11 %","Mainstem",15,60.5447989124051,-151.222728169312,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"City_of_Kenai_Docks",2019-07-30,"Mainstem",74.98,NA,0.562,NA,8.97,NA,5,NA,80.87,NA,"","","Mainstem",15,60.5447989124051,-151.222728169312,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"City_of_Kenai_Docks",2020-07-21,"Mainstem",50.23,NA,3.88,NA,6.37,NA,4.16,NA,57.6,NA,"","","Mainstem",15,60.5447989124051,-151.222728169312,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Cunningham_Park",2019-04-30,"Mainstem",36.84,NA,0.751,NA,4.89,NA,65.6,NA,44.29,NA,"","","Mainstem",6.5,60.540757,-151.183401,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Cunningham_Park",2019-07-30,"Mainstem",33.74,NA,0.428,NA,4.53,NA,5,NA,41.12,NA,"","","Mainstem",6.5,60.540757,-151.183401,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Cunningham_Park",2020-07-21,"Mainstem",33.23,NA,0.334,NA,4.47,NA,3.59,NA,40.58,NA,"","","Mainstem",6.5,60.540757,-151.183401,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Beaver_Creek",2019-04-30,"Tributary",43.06,NA,3.91,NA,5.58,NA,84.1,NA,50.55,NA,"","","Tributary",NA,60.641201,-151.084718,"Coordinates provided by MH",NA
+"Beaver_Creek",2019-07-30,"Tributary",73.65,NA,1.77,NA,8.83,NA,69.9,NA,79.66,NA,"","","Tributary",NA,60.641201,-151.084718,"Coordinates provided by MH",NA
+"Beaver_Creek",2020-07-21,"Tributary",63.36,NA,0.509,NA,7.77,NA,3.27,NA,70.12,NA,"","","Tributary",NA,60.641201,-151.084718,"Coordinates provided by MH",NA
+"Upstream_of_Beaver_Creek",2019-04-30,"Mainstem",34.23,NA,0.66,NA,4.59,NA,67.1,NA,41.62,NA,"","","Mainstem",10.1,60.538524,-151.144348,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Upstream_of_Beaver_Creek",2019-07-30,"Mainstem",33.62,NA,0.497,NA,4.52,NA,10.7,NA,40.99,NA,"","","Mainstem",10.1,60.538524,-151.144348,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Upstream_of_Beaver_Creek",2020-07-21,"Mainstem",31.16,NA,0.5,NA,4.24,NA,5,NA,38.43,NA,"","","Mainstem",10.1,60.538524,-151.144348,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Pillars",2019-04-30,"Mainstem",33.9,NA,0.681,NA,4.55,NA,86,NA,41.28,NA,"","","Mainstem",12.5,60.533863,-151.098646,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Pillars",2019-07-30,"Mainstem",33.58,NA,0.452,NA,4.52,NA,8.14,NA,40.94,NA,"","","Mainstem",12.5,60.533863,-151.098646,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Pillars",2020-07-21,"Mainstem",30.83,NA,0.5,NA,4.2,NA,5,NA,38.08,NA,"","","Mainstem",12.5,60.533863,-151.098646,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Poachers_Cove",2019-04-30,"Mainstem",34.53,NA,0.47,NA,4.62,NA,5,NA,41.92,NA,"","","Mainstem",18,60.502256,-151.106401,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Poachers_Cove",2019-07-30,"Mainstem",33.87,NA,0.42,NA,4.55,NA,5,NA,41.25,NA,"","","Mainstem",18,60.502256,-151.106401,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Poachers_Cove",2020-07-21,"Mainstem",29.96,NA,0.5,NA,4.1,NA,5,NA,37.17,NA,"","","Mainstem",18,60.502256,-151.106401,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Slikok_Creek",2019-04-30,"Tributary",38.45,38.74,0.783,0.5,5.07,5.1,74.4,5,45.93,46.22,"44.12 %","174.81 %","Tributary",NA,60.402664,-151.147385,"Coordinates provided by MH",NA
+"Slikok_Creek",2019-07-30,"Tributary",73.58,NA,0.684,NA,8.83,NA,4.01,NA,79.6,NA,"","","Tributary",NA,60.402664,-151.147385,"Coordinates provided by MH",NA
+"Slikok_Creek",2020-07-21,"Tributary",62.29,NA,0.5,NA,7.66,NA,5,NA,69.12,NA,"","","Tributary",NA,60.402664,-151.147385,"Coordinates provided by MH",NA
+"Soldotna_Bridge",2019-04-30,"Mainstem",33.49,NA,0.716,NA,4.5,NA,56.4,NA,40.85,NA,"","","Mainstem",21,60.476742,-151.08233,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Soldotna_Bridge",2019-07-30,"Mainstem",33.58,NA,0.493,NA,4.52,NA,5,NA,40.94,NA,"","","Mainstem",21,60.476742,-151.08233,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Soldotna_Bridge",2020-07-21,"Mainstem",30.33,NA,0.348,NA,4.14,NA,5,NA,37.57,NA,"","","Mainstem",21,60.476742,-151.08233,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Soldotna_Creek",2019-04-30,"Tributary",58.94,NA,0.597,NA,7.3,NA,137,NA,65.96,NA,"","","Tributary",NA,60.550828,-150.958325,"Coordinates provided by MH",NA
+"Soldotna_Creek",2019-07-30,"Tributary",81.39,NA,0.424,NA,9.62,NA,5,NA,86.7,NA,"","","Tributary",NA,60.550828,-150.958325,"Coordinates provided by MH",NA
+"Soldotna_Creek",2020-07-21,"Tributary",77.1,NA,0.5,NA,9.19,NA,5.52,NA,82.81,NA,"","","Tributary",NA,60.550828,-150.958325,"Coordinates provided by MH",NA
+"Swiftwater_Park",2019-04-30,"Mainstem",34.11,NA,0.462,NA,4.58,NA,59.6,NA,41.49,NA,"","","Mainstem",23,60.482048,-151.041602,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Swiftwater_Park",2019-07-30,"Mainstem",33.33,NA,0.398,NA,4.49,NA,3.49,NA,40.69,NA,"","","Mainstem",23,60.482048,-151.041602,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Swiftwater_Park",2020-07-21,"Mainstem",30.08,NA,0.359,NA,4.11,NA,5,NA,37.3,NA,"","","Mainstem",23,60.482048,-151.041602,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth",NA
+"Funny_River",2019-04-30,"Tributary",34.41,NA,0.363,NA,4.61,NA,5,NA,41.8,NA,"","","Tributary",NA,60.49006,-150.860657,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth","Is site upstream of downstream of bridge?"
+"Funny_River",2019-07-30,"Tributary",42.01,NA,0.514,NA,5.47,NA,5.63,NA,49.5,NA,"","","Tributary",NA,60.49006,-150.860657,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth","Is site upstream of downstream of bridge?"
+"Funny_River",2020-07-21,"Tributary",38.13,NA,0.495,NA,5.03,NA,3.53,NA,45.6,NA,"","","Tributary",NA,60.49006,-150.860657,"Coords estimated by B Meyer from Fig. 1 in 2019 report and Google Earth","Is site upstream of downstream of bridge?"
