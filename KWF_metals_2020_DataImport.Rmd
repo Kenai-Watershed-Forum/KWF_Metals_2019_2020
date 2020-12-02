@@ -16,7 +16,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
-Document last updated `r Sys.time()` by Benjamin Meyer (benjamin.meyer.ak@gmail.com)
+Document last updated `r Sys.time()` by Benjamin Meyer (ben@kenaiwatershed.org)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
@@ -251,9 +251,24 @@ met_tbl <- tbl %>%
 # join tables in long form
 tbl2 <- inner_join(met_tbl,ccc_tbl) %>%
   left_join(rdl_tbl) %>%
-  left_join(coords)
+  left_join(coords) %>%
+  arrange(metal,met_val)
 
 ```
+
+<br>
+
+Summarise the range of meyal and CCC values observed
+```{r}
+tbl2 %>%
+  group_by(site,metal) %>%
+  summarise(met_max = max(met_val),
+            met_min = min(met_val),
+            ccc_max = max(ccc_val),
+            ccc_min = min(ccc_val)) %>%
+  arrange(metal, met_max)
+```
+
 
 
 <br>
@@ -344,7 +359,7 @@ ms_order <- c("City_of_Kenai_Docks",
 # shorten site names
 ms_sites <- c("City_of_Kenai_Docks" = "CoK_Docks",
               "Cunningham_Park" = "C_Park",
-              "Upstream_of_Beaver_Creek" = "Beaver",
+              "Upstream_of_Beaver_Creek" = "Upstream_of_Beaver",
               "Pillars" = "Pillars",
               "Poachers_Cove" = "Poachers",
               "Slikok_Creek_Kenai_River_Confluence" = "Slikok",
@@ -406,4 +421,6 @@ annotate_figure(p,
 
 ```
 
+Metal observations were made but have missing CCC values for 5/22/2019 and
+7/24/2019.  Find out why metal observations missing!
 
