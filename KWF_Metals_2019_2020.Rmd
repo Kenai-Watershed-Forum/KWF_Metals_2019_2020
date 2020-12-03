@@ -1,0 +1,142 @@
+---
+title: "KWF_Metals_2019_2020"
+output:
+  html_document: 
+    df_print: paged
+    fig_width: 10
+    fig_height: 6
+    fig_caption: yes
+    code_folding: hide
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+editor_options: 
+  chunk_output_type: inline
+---
+
+Document last updated `r Sys.time()` by Benjamin Meyer (ben@kenaiwatershed.org)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+# clear environment
+rm(list=ls())
+
+# load packages
+library(tidyverse)
+library(lubridate)
+library(readr)
+library(readxl)
+library(writexl)
+library(hms)
+library(plotly)
+library(DT)
+library(xlsx)
+library(leaflet)
+library(DT)
+library(ggpubr)
+```
+
+<br>
+
+This draft document contains preliminary data explorations of 2019-2020 copper and zinc water quality data from the Kenai River Watershed.
+
+<br>
+
+Notes:
+
+* Read in data directly from the two AWQMS-formatted documents for 2019 and 2020 found on the Kenai Watershed Forum local server.
+
+<br>
+
+***
+
+Read in and prepare data
+```{r}
+# read in excel files
+dat19 <- read_excel("data/2019_KWF_AWQMS_Results.xlsx", sheet = "AWQMS Data Template") %>%
+  mutate_all(as.character)
+dat20 <- read_excel("data/2020_KWF_AWQMS_Results.xlsx", sheet = "AWQMS Data Template", 
+                    skip = 1) %>%
+  mutate_all(as.character)
+
+# specify col names to retain
+vars <- c("Monitoring Location ID",
+          "Activity Media Name",
+          "Activity Start Date",
+          "Activity Latitude",
+          "Activity Longitude",
+          "Activity Type",
+          "Characteristic Name",
+          "Result Value",
+          "Result Unit",
+          "Result Qualifier",
+          "Result Value Type",
+          "Result Status ID")
+
+# create new variable names
+nm <- c("Location",
+        "Medium",
+        "Date",
+        "Latitude",
+        "Longitude",
+        "Activity",
+        "Measurememnt", 
+        "Value",
+        "Unit",
+        "Qualifier",
+        "Value_Type",
+        "Status")
+
+# join the two years
+dat <- bind_rows(dat19,dat20) %>%
+  select(all_of(vars)) %>%
+  filter(!is.na(`Monitoring Location ID`))
+
+# rename columns
+colnames(dat) <- nm
+
+# remove unneeded items
+rm(dat19,dat20,nm,vars)
+
+```
+
+<br>
+
+
+***
+
+### Locations
+```{r}
+(sites <- dat %>%
+  select(Location,Latitude,Longitude) %>%
+  distinct() %>%
+  mutate(Latitude = as.numeric(Latitude),
+         Longitude = as.numeric(Longitude)))
+```
+
+<br>
+
+Show locations on map
+```{r}
+leaflet(data = sites) %>% 
+  addTiles() %>%
+  addMarkers(~Longitude, ~Latitude, popup = ~as.character(Location))
+```
+
+<br>
+
+### Comments
+
+Note: The locations shown above are inclusive of all known data found on the two AWQMS-formatted documents on the Kenai Watershed Forum server.  The locations appear to include solely the supplemental Copper and Zinc-specific sampling event sites of 2019-2020, and do not include the other standard biannual KRBWQM sites.
+
+To do: 
+
+* Ensure that all 2019 - 2020 has been submitted to DEC, including the KRBWQM data
+* Locate, format, and submit any missing data to DEC if not already present in their archive
+* For generating the 2019 - 2020 report, we will use the tables prepared in the Excel document, "AllData_ZnCuCaMg_19-20.xlsx"
+* See main RPubs document for a continuation of this analysis: https://rpubs.com/bmeyer/cu_zn_2019_2020 , using data from "AllData_ZnCuCaMg_19-20.xlsx"
+
+
