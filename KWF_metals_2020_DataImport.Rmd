@@ -47,13 +47,15 @@ This draft document contains preliminary data explorations of 2019-2020 copper a
 
 Notes:
 
-* In the future it will be much better to read in final data directly from the EPA institutional archive, in its most static version.  I found Cu, Zn, Mg, and Ca data pre-2013 at https://www.waterqualitydata.us/portal/, but did not yet find 2013-2020 data there.
+* Attempted to source data from AWQMS formatted files, but was unable to locate all known 2019 - 2020 data there.  See the document https://rpubs.com/bmeyer/AWQMS_CuZn_2019_2020 for further discussion and recommended actions.
+
+* In the future it will be important to be able to read in final data directly from the EPA institutional archive, in its most static version.  I found Cu, Zn, Mg, and Ca data pre-2013 there at https://www.waterqualitydata.us/portal/, but did not yet find 2014-2020 data there.
 
 * Specific query used: https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult
 
-* Where are the rest of the years archived? Do they need to be submitted AQMS?  Maybe use a different query?
+* Where are the rest of the years archived? Do they need to be submitted AWQMS?  Maybe use a different query?
 
-* In cases 2019 where hardness data not available, data from nearest sampling event was used instead.
+* In cases 2019 where hardness data not available, data from nearest sampling event was used instead.  See written report for further description.
 
 <br>
 
@@ -62,18 +64,15 @@ Notes:
 ### Data Read in and preparation
 
 Read in results columns directly from tabs "FINALREPORT_ZnCuSampling_19-20" and "FINALREPORT_Baseline_19-20" in the Excel document "AllData_ZnCuCaMg_19-20.xlsx" prepared by MH in Fall 2020
+
 ```{r}
+
 # specify file paths and sheet names
 workbook <- "data/AllData_ZnCuCaMg_19-20.xlsx"
-zn_cu_fnl <- "FINALREPORT_ZnCuSampling_19-20"
-baseline_fnl <- "FINALREPORT_Baseline_19-20"
+tab <- "BM_format_2020"
 
 # read in tabs
-zn_cu_fnl <- read_excel(workbook, sheet = zn_cu_fnl, skip = 4) 
-baseline_fnl <- read_excel(workbook, sheet = baseline_fnl, skip = 4)
-
-# join dataframes
-tbl <- bind_rows(zn_cu_fnl,baseline_fnl)
+tbl <- read_excel(workbook, sheet = tab, skip = 2) 
 
 # assign new column names
 vars <- c("site","rm","date","waterbody_type","hardness_mgL","copper_ugL","copper_ccc_ugL","zinc_ugL","zinc_ccc_ugL")
@@ -83,7 +82,9 @@ colnames(tbl) <- vars
 tbl <- tbl%>%
   select(-rm) %>%
   filter(!is.na(date)) %>%
+  filter(date != "Date") %>%
   fill(site) %>%
+  transform(date = as.Date(as.numeric(date), origin = "1899-12-30")) %>%
   
   # hardness
   separate(hardness_mgL, sep = " ", into = c("hardness_mgL_1","hardness_mgL_2"), remove = F) %>%
@@ -138,7 +139,9 @@ tbl <- tbl%>%
   mutate(site = as.factor(str_replace_all(site,"-","_"))) %>%
   mutate(site = as.factor(str_replace_all(site,"'","")))
 
+
 ```
+
 
 <br>
 
@@ -153,13 +156,15 @@ tbl <- tbl %>%
   mutate(zn_rdl = paste(sprintf((abs(zinc_ugL_1 - zinc_ugL_2) / ((zinc_ugL_1 + zinc_ugL_2) / 2)*100), fmt = '%#.2f'),"%")) %>%
   mutate(zn_rdl = str_replace(zn_rdl, "NA %", ""))
   
+# write rdl table to excel tab
+
 ```
 
 <br>
 
 ***
 
-### Table
+### Data Table
 
 ```{r}
 # read in coordinates
@@ -183,22 +188,34 @@ datatable(tbl,
 
 ### Map
 
-Show sampling sites and raw data on an ArcGIS Online map (also at https://arcg.is/0rKbbr)
+Show sampling sites and raw data on an ArcGIS Online map (also at https://arcg.is/0yij15)
 ```{r}
+# add site identifier
+tbl <- tbl %>%
+  group_by(site) %>%
+  mutate(Site_ID = cur_group_id())
+
+
 # used arcgis online from csv exported here
 write.csv(tbl, "output/CuZn_2019_2020_results.csv", row.names = F)
 
-# viewable at https://arcg.is/0rKbbr
+# viewable at https://arcg.is/0yij15
 
 ```
 
 <br>
 
 2019 - 2020 Cu and Zn sampling sites
+```{r}
+coords %>%
+  select(site,Habitat,Lat,Long)
+```
+
+
 
 <br>
 
-<style>.embed-container {position: relative; padding-bottom: 80%; height: 0; max-width: 100%;} .embed-container iframe, .embed-container object, .embed-container iframe{position: absolute; top: 0; left: 0; width: 100%; height: 100%;} small{position: absolute; z-index: 40; bottom: 0; margin-bottom: -15px;}</style><div class="embed-container"><iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" title="Copper and Zinc Sampling 2019-2020" src="//www.arcgis.com/apps/Embed/index.html?webmap=b412c05eb1b0492f95f4667e7c86c7c5&extent=-151.3062,60.4157,-150.5832,60.6518&home=true&zoom=true&previewImage=false&scale=true&search=true&searchextent=true&legend=true&basemap_gallery=true&disable_scroll=true&theme=light"></iframe></div>
+<style>.embed-container {position: relative; padding-bottom: 80%; height: 0; max-width: 100%;} .embed-container iframe, .embed-container object, .embed-container iframe{position: absolute; top: 0; left: 0; width: 100%; height: 100%;} small{position: absolute; z-index: 40; bottom: 0; margin-bottom: -15px;}</style><div class="embed-container"><iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" title="Copper and Zinc Sampling 2019-2020, Kenai Wateshed Forum" src="//www.arcgis.com/apps/Embed/index.html?webmap=e9bf4b82cc0d4ea3a5c8724e73ae3362&extent=-151.3908,60.3307,-149.9928,60.7125&home=true&zoom=true&previewImage=false&scale=true&search=true&searchextent=true&basemap_gallery=true&disable_scroll=true&theme=light"></iframe></div>
 
 <br>
 
@@ -252,13 +269,14 @@ met_tbl <- tbl %>%
 tbl2 <- inner_join(met_tbl,ccc_tbl) %>%
   left_join(rdl_tbl) %>%
   left_join(coords) %>%
-  arrange(metal,met_val)
+  arrange(metal,met_val) %>%
+  distinct()
 
 ```
 
 <br>
 
-Summarise the range of meyal and CCC values observed
+Summarise the range of metal and CCC values observed
 ```{r}
 tbl2 %>%
   group_by(site,metal) %>%
@@ -270,75 +288,74 @@ tbl2 %>%
 ```
 
 
-
 <br>
-
 
 #### Tributary site plots
 ```{r}
-# specify facet orders
 ## tributaries
-trib_order <- c("No_Name_Creek",
-                "Beaver_Creek",
-                "Slikok_Creek",
-                "Soldotna_Creek",
-                "Funny_River")
+trib_order <- c("Lower_No_Name_Creek",
+                "Upper_No_Name_Creek",
+                "Lower_Beaver_Creek",
+                "Upper_Beaver_Creek",
+                "Lower_Slikok_Creek",
+                "Upper_Slikok_Creek",
+                "Lower_Soldotna_Creek",
+                "Upper_Soldotna_Creek",
+                "Lower_Funny_River")
 tbl2_trib <- tbl2 %>% filter(Habitat == "Tributary")
 tbl2_trib$site <- factor(tbl2_trib$site, levels = trib_order)
 
+# common theme
+cuzn_theme <- theme(
+  strip.text.y = element_text(face = "bold", angle = 0),
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1),
 
-# specify common ggplot theme here
+        plot.title = element_text(hjust = 0.5),
+        strip.background = element_blank()) 
 
-
-# create separate charts with different y axes for each metal
-cu_trib <- tbl2_trib%>%
-  filter(metal == "cu") %>%
+# copper in tributaries
+(cu_tribs <- tbl2_trib %>%
+    filter(metal == "cu") %>%
   ggplot() +
-  geom_point(aes(as.factor(date),as.numeric(met_val), color = metal)) +
-  scale_color_manual(values = c("cu" = "red")) +
-  geom_point(aes(as.factor(date),as.numeric(ccc_val)), shape = 95, size = 3) +
-  facet_grid(.~site, scales = "free_y") +
+  geom_point(aes(as.factor(date),as.numeric(met_val), color = "Copper")) +
+  geom_point(aes(as.factor(date),as.numeric(ccc_val), fill = "CCC"), shape = 95, size = 4) +
+    scale_color_discrete(name = "") +
+    scale_fill_discrete(name = "") +
+  facet_wrap(site ~ ., scales = "free_y") +
   theme_bw() +
-  theme(axis.text.x = element_blank(),
-        strip.background.x = element_blank(),
-        strip.text.x = element_text(face = "bold"),
-        legend.position = "none") +
+  cuzn_theme +
   xlab("") +
-  ylab("") +
-  ylim(0,10)
-cu_trib <-  annotate_figure(cu_trib,right = text_grob("Cu", color = "Red", 
-                                 face = "bold", size = 14, rot = 0))
+  ylab("Concentration (ug/L)") +
+  ggtitle("Kenai River Tributaries\nCopper Concentrations and Criterion Values"))
 
-zn_trib <- tbl2_trib %>%
-  filter(metal == "zn") %>%
-  ggplot() +
-  geom_point(aes(as.factor(date),as.numeric(met_val))) +
-  geom_point(aes(as.factor(date),as.numeric(ccc_val)), shape = 95, size = 3) +
-  facet_grid(.~site, scales = "free_y") +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1),
-        strip.background = element_blank(),
-        strip.text.x = element_blank()) +
-  xlab("") +
-  ylab("") +
-  ylim(0,175)
-zn_trib <-  annotate_figure(zn_trib,right = text_grob("Zn", color = "black", 
-                                 face = "bold", size = 16, rot = 0))
-
-# arrange 2 charts together
-p <- ggarrange(cu_trib,zn_trib,nrow = 2)
-annotate_figure(p,
-                top = text_grob("Kenai River Tributary Sites", 
-                                color = "black", face = "bold", size = 18),
-                left = text_grob("Concentration (ug/L)", color = "black", 
-                                 face = "bold", size = 16, rot = 90),
-                fig.lab = "— = CCC",
-                fig.lab.pos = "bottom.right",
-                fig.lab.face = "bold")
-
-# note: used ggarrange rather than ggplot facet_grid for overall because y-axis scales were different
+# save to output folder
+ggsave("output/figures/cu_tribs.png")
 
 ```
+
+<br>
+
+```{r}
+# zn in tributaries
+(zn_tribs <- tbl2_trib%>%
+    filter(metal == "zn") %>%
+  ggplot() +
+  geom_point(aes(as.factor(date),as.numeric(met_val), color = "Zinc")) +
+  geom_point(aes(as.factor(date),as.numeric(ccc_val), fill = "CCC"), shape = 95, size = 4) +
+    scale_color_discrete(name = "") +
+    scale_fill_discrete(name = "") +
+  facet_wrap(site ~ ., scales = "free_y") +
+  theme_bw() +
+  cuzn_theme +
+  xlab("") +
+  ylab("Concentration (ug/L)") +
+  ggtitle("Kenai River Tributaries\nZinc Concentrations and Criterion Values"))
+
+# save to output folder
+ggsave("output/figures/zn_tribs.png")
+
+```
+
 
 <br>
 
@@ -357,70 +374,72 @@ ms_order <- c("City_of_Kenai_Docks",
               "Skilak_Lake_Outlet")
 
 # shorten site names
-ms_sites <- c("City_of_Kenai_Docks" = "CoK_Docks",
-              "Cunningham_Park" = "C_Park",
-              "Upstream_of_Beaver_Creek" = "Upstream_of_Beaver",
+ms_sites <- c("City_of_Kenai_Docks" = "Kenai_Docks",
+              "Cunningham_Park" = "Cunningham",
+             "Upstream_of_Beaver_Creek" = "Upstream_of_Beaver",
               "Pillars" = "Pillars",
               "Poachers_Cove" = "Poachers",
-              "Slikok_Creek_Kenai_River_Confluence" = "Slikok",
-              "Soldotna_Bridge" = "S_Bridge",
-              "Swiftwater_Park" = "Swift",
-              "Jims_Landing" = "Jims",
-              "Skilak_Lake_Outlet" = "Skilak")
+              "Slikok_Creek_Kenai_River_Confluence" = "Slikok_Confluence",
+              "Soldotna_Bridge" = "Soldotna_Bridge",
+              "Swiftwater_Park" = "Swiftwater",
+              "Jims_Landing" = "Jims_Landing",
+              "Skilak_Lake_Outlet" = "Skilak_Lake_Outlet")
 
 tbl2_ms <- tbl2 %>% filter(Habitat == "Mainstem")
 tbl2_ms$site <- factor(tbl2_ms$site, levels = ms_order)
 
+# common theme
+cuzn_theme <- theme(
+  strip.text.y = element_text(face = "bold", angle = 0),
+  # modified x axis text angle
+        axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1),
 
-# create separate charts with different y axes for each metal
-cu_ms <- tbl2_ms%>%
-  filter(metal == "cu") %>%
+        plot.title = element_text(hjust = 0.5),
+        strip.background = element_blank()) 
+
+
+# copper in mainstem
+(cu_ms <- tbl2_ms %>%
+    filter(metal == "cu") %>%
   ggplot() +
-  geom_point(aes(as.factor(date),as.numeric(met_val), color = metal)) +
-  scale_color_manual(values = c("cu" = "red")) +
-  geom_point(aes(as.factor(date),as.numeric(ccc_val)), shape = 95, size = 3) +
-  facet_grid(.~site, scales = "free_y", labeller = as_labeller(ms_sites)) +
+  geom_point(aes(as.factor(date),as.numeric(met_val), color = "Copper")) +
+  geom_point(aes(as.factor(date),as.numeric(ccc_val), fill = "CCC"), shape = 95, size = 4) +
+    scale_color_discrete(name = "") +
+    scale_fill_discrete(name = "") +
+  facet_wrap(site ~ ., scales = "free_y", labeller = as_labeller(ms_sites)) +
   theme_bw() +
-  theme(axis.text.x = element_blank(),
-        strip.background.x = element_blank(),
-        strip.text.x = element_text(face = "bold"),
-        legend.position = "none") +
+  cuzn_theme +
   xlab("") +
-  ylab("") +
-  ylim(0,10)
-cu_ms <-  annotate_figure(cu_ms,right = text_grob("Cu", color = "Red", 
-                                 face = "bold", size = 14, rot = 0))
+  ylab("Concentration (ug/L)") +
+  ggtitle("Kenai River Mainstem\nCopper Concentrations and Criterion Values"))
 
-zn_ms <- tbl2_ms %>%
-  filter(metal == "zn") %>%
-  ggplot() +
-  geom_point(aes(as.factor(date),as.numeric(met_val))) +
-  geom_point(aes(as.factor(date),as.numeric(ccc_val)), shape = 95, size = 3) +
-  facet_grid(.~site, scales = "free_y") +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1, size = 8),
-        strip.background = element_blank(),
-        strip.text.x = element_blank()) +
-  xlab("") +
-  ylab("") +
-  ylim(0,175)
-zn_ms <-  annotate_figure(zn_ms,right = text_grob("Zn", color = "black", 
-                                 face = "bold", size = 16, rot = 0))
-
-# arrange 2 charts together
-p <- ggarrange(cu_ms,zn_ms,nrow = 2)
-annotate_figure(p,
-                top = text_grob("Kenai River Mainstem Sites", 
-                                color = "black", face = "bold", size = 18),
-                left = text_grob("Concentration (ug/L)", color = "black", 
-                                 face = "bold", size = 16, rot = 90),
-                fig.lab = "— = CCC",
-                fig.lab.pos = "bottom.right",
-                fig.lab.face = "bold")
-
-
+# save to output folder
+ggsave("output/figures/cu_ms.png")
 ```
 
-Metal observations were made but have missing CCC values for 5/22/2019 and
-7/24/2019.  Find out why metal observations missing!
+<br>
+
+```{r}
+# zn in mainstem
+(zn_ms <- tbl2_ms %>%
+    filter(metal == "zn") %>%
+  ggplot() +
+  geom_point(aes(as.factor(date),as.numeric(met_val), color = "Zinc")) +
+  geom_point(aes(as.factor(date),as.numeric(ccc_val), fill = "CCC"), shape = 95, size = 4) +
+    scale_color_discrete(name = "") +
+    scale_fill_discrete(name = "") +
+  facet_wrap(site ~ ., scales = "free_y", labeller = as_labeller(ms_sites)) +
+  theme_bw() +
+  cuzn_theme +
+  xlab("") +
+  ylab("Concentration (ug/L)") +
+  ggtitle("Kenai River Mainstem\nZinc Concentrations and Criterion Values"))
+
+# save to output folder
+ggsave("output/figures/zn_ms.png")
+```
+
+<br>
+
+
 
