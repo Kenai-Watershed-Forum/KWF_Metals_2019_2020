@@ -37,6 +37,7 @@ library(xlsx)
 library(leaflet)
 library(DT)
 library(ggpubr)
+library(plotrix)
 ```
 
 <br>
@@ -49,11 +50,9 @@ Notes:
 
 * Attempted to source data from AWQMS formatted files, but was unable to locate all known 2019 - 2020 data there.  See the document https://rpubs.com/bmeyer/AWQMS_CuZn_2019_2020 for further discussion and recommended actions.
 
-* In the future it will be important to be able to read in final data directly from the EPA institutional archive, in its most static version.  I found Cu, Zn, Mg, and Ca data pre-2013 there at https://www.waterqualitydata.us/portal/, but did not yet find 2014-2020 data there.
+* In the future it will be important to be able to read in final data directly from the EPA institutional archive, in its most static version.  I found Cu, Zn, Mg, and Ca data pre-2013 there at https://www.waterqualitydata.us/portal/, but did not yet find 2014-2020 data there.  Do 2014-2020 data still need to be submitted to EPA, or do we just need a different query?
 
 * Specific query used: https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult
-
-* Where are the rest of the years archived? Do they need to be submitted AWQMS?  Maybe use a different query?
 
 * In cases 2019 where hardness data not available, data from nearest sampling event was used instead.  See written report for further description.
 
@@ -72,7 +71,7 @@ workbook <- "data/AllData_ZnCuCaMg_19-20.xlsx"
 tab <- "BM_format_2020"
 
 # read in tabs
-tbl <- read_excel(workbook, sheet = tab, skip = 2) 
+tbl <- read_excel(workbook, sheet = tab, skip = 1) 
 
 # assign new column names
 vars <- c("site","rm","date","waterbody_type","hardness_mgL","copper_ugL","copper_ccc_ugL","zinc_ugL","zinc_ccc_ugL")
@@ -82,9 +81,8 @@ colnames(tbl) <- vars
 tbl <- tbl%>%
   select(-rm) %>%
   filter(!is.na(date)) %>%
-  filter(date != "Date") %>%
   fill(site) %>%
-  transform(date = as.Date(as.numeric(date), origin = "1899-12-30")) %>%
+  transform(date = as.Date(date, origin = "1899-12-30")) %>%
   
   # hardness
   separate(hardness_mgL, sep = " ", into = c("hardness_mgL_1","hardness_mgL_2"), remove = F) %>%
@@ -145,6 +143,10 @@ tbl <- tbl%>%
 
 <br>
 
+***
+
+### Duplicate sample % differences
+
 Calculate RDL values for Zn and Cu duplicate samples
 ```{r}
 tbl <- tbl %>%
@@ -156,7 +158,40 @@ tbl <- tbl %>%
   mutate(zn_rdl = paste(sprintf((abs(zinc_ugL_1 - zinc_ugL_2) / ((zinc_ugL_1 + zinc_ugL_2) / 2)*100), fmt = '%#.2f'),"%")) %>%
   mutate(zn_rdl = str_replace(zn_rdl, "NA %", ""))
   
-# write rdl table to excel tab
+# write rdl table 
+rdl_tbl <- tbl %>%
+  ungroup() %>%
+  filter(!is.na(cu_rdl),
+         cu_rdl != "") %>%
+  arrange(site,date) %>%
+  select(site,date,cu_rdl,zn_rdl)
+
+# rename columns
+colnames(rdl_tbl) <- c("Site","Date","Copper RDL(%)","Zinc RDL(%)")
+
+# export RDL table
+#write.csv(rdl_tbl, "output/rdl_tbl.csv", row.names = F)
+
+datatable(rdl_tbl,
+          filter = 'top', 
+          options = list(pageLength = 5, autoWidth = TRUE))
+```
+
+<br>
+
+What was the average percent difference for duplicate samples?
+```{r}
+z <- rdl_tbl %>%
+  gather(key = rdl, val = val, "Copper RDL(%)","Zinc RDL(%)") %>%
+  mutate(val = as.numeric(gsub("%","",val))) %>%
+  mutate(Metal = gsub(" RDL(%)","",rdl)) %>%
+  group_by(Metal) %>%
+  summarise(m = mean(val),
+            se = std.error(val))
+
+colnames(z) <- c("Metal", "Mean RDL (%)","Std. Error(%)")
+
+z
 
 ```
 
@@ -164,7 +199,7 @@ tbl <- tbl %>%
 
 ***
 
-### Data Table
+### Raw Data Table
 
 ```{r}
 # read in coordinates
@@ -188,7 +223,7 @@ datatable(tbl,
 
 ### Map
 
-Show sampling sites and raw data on an ArcGIS Online map (also at https://arcg.is/0yij15)
+
 ```{r}
 # add site identifier
 tbl <- tbl %>%
@@ -205,15 +240,23 @@ write.csv(tbl, "output/CuZn_2019_2020_results.csv", row.names = F)
 
 <br>
 
-2019 - 2020 Cu and Zn sampling sites
+#### Site coordinates
 ```{r}
-coords %>%
+cd <- coords %>%
   select(site,Habitat,Lat,Long)
+
+datatable(cd,
+          filter = 'top', 
+          options = list(pageLength = 5, autoWidth = TRUE))
 ```
 
 
 
 <br>
+
+#### ArcGIS Online map
+
+Sampling sites and raw data on an interactive map (also at https://arcg.is/0yij15)
 
 <style>.embed-container {position: relative; padding-bottom: 80%; height: 0; max-width: 100%;} .embed-container iframe, .embed-container object, .embed-container iframe{position: absolute; top: 0; left: 0; width: 100%; height: 100%;} small{position: absolute; z-index: 40; bottom: 0; margin-bottom: -15px;}</style><div class="embed-container"><iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" title="Copper and Zinc Sampling 2019-2020, Kenai Wateshed Forum" src="//www.arcgis.com/apps/Embed/index.html?webmap=e9bf4b82cc0d4ea3a5c8724e73ae3362&extent=-151.3908,60.3307,-149.9928,60.7125&home=true&zoom=true&previewImage=false&scale=true&search=true&searchextent=true&basemap_gallery=true&disable_scroll=true&theme=light"></iframe></div>
 
@@ -278,13 +321,17 @@ tbl2 <- inner_join(met_tbl,ccc_tbl) %>%
 
 Summarise the range of metal and CCC values observed
 ```{r}
-tbl2 %>%
+dt <- tbl2 %>%
   group_by(site,metal) %>%
   summarise(met_max = max(met_val),
             met_min = min(met_val),
             ccc_max = max(ccc_val),
             ccc_min = min(ccc_val)) %>%
   arrange(metal, met_max)
+
+datatable(dt,
+          filter = 'top', 
+          options = list(pageLength = 5, autoWidth = TRUE))
 ```
 
 
@@ -441,5 +488,24 @@ ggsave("output/figures/zn_ms.png")
 
 <br>
 
+Are copper and zinc values correlated?
+```{r}
+tbl2 %>%
+  ungroup() %>%
+  group_by(metal) %>%
+  mutate(r = row_number()) %>%
+  select(metal,met_val,r,Habitat) %>%
+  spread(key = metal, val = met_val) %>%
+  ggplot(aes(cu,zn, color = Habitat)) +
+  geom_point() + 
+  theme_classic() +
+  xlab("Copper (ug/L)") +
+  ylab("Zinc (ug/L)") +
+  xlim(0,2.5) +
+  ggtitle("Copper vs Zinc values 2019-2020")
+  
+```
+
+Relationship between copper and zinc appear to follow an approximately logistic relationship.  We would e abel to determintaively observe the relationship with the 20 year dataset.
 
 
