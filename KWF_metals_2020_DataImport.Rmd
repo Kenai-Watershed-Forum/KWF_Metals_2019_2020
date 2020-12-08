@@ -48,7 +48,7 @@ This draft document contains preliminary data explorations of 2019-2020 copper a
 
 Notes:
 
-* Attempted to source data from AWQMS formatted files, but was unable to locate all known 2019 - 2020 data there.  See the document https://rpubs.com/bmeyer/AWQMS_CuZn_2019_2020 for further discussion and recommended actions.
+* Attempted to source data from AWQMS formatted files, but was unable to locate all known 2019 - 2020 data there.  See the document https://rpubs.com/Kenai_Watershed_Forum/cu_zn_2019_2020_initial_EDA for further discussion and recommended actions.
 
 * In the future it will be important to be able to read in final data directly from the EPA institutional archive, in its most static version.  I found Cu, Zn, Mg, and Ca data pre-2013 there at https://www.waterqualitydata.us/portal/, but did not yet find 2014-2020 data there.  Do 2014-2020 data still need to be submitted to EPA, or do we just need a different query?
 
