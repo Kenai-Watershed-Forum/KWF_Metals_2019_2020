@@ -16,7 +16,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
-Document last updated `r Sys.time()` by Benjamin Meyer (ben@kenaiwatershed.org)
+Document last updated `r Sys.time()` by Benjamin Meyer ([ben\@kenaiwatershed.org](mailto:ben@kenaiwatershed.org){.email})
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
@@ -48,17 +48,19 @@ This draft document contains preliminary data explorations of 2019-2020 copper a
 
 Notes:
 
-* Attempted to source data from AWQMS formatted files, but was unable to locate all known 2019 - 2020 data there.  See the document https://rpubs.com/Kenai_Watershed_Forum/cu_zn_2019_2020_initial_EDA for further discussion and recommended actions.
+-   Attempted to source 2019-2020 data from AWQMS formatted files found on KWF server, but was unable to locate all known 2019 - 2020 data there. See the document <https://rpubs.com/Kenai_Watershed_Forum/cu_zn_2019_2020_initial_EDA> for further discussion and recommended actions.
 
-* In the future it will be important to be able to read in final data directly from the EPA institutional archive, in its most static version.  I found Cu, Zn, Mg, and Ca data pre-2013 there at https://www.waterqualitydata.us/portal/, but did not yet find 2014-2020 data there.  Do 2014-2020 data still need to be submitted to EPA, or do we just need a different query?
+-   Next, I queried the US EPA water quality data portal.  I found Cu, Zn, Mg, and Ca data pre-2013 there at <https://www.waterqualitydata.us/portal/>, but did not yet find 2014-2020 data there. Do 2014-2020 data still need to be submitted to EPA, or do we just need a different query?
 
-* Specific query used: https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult
+-   Specific query used: <https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult>
 
-* In cases 2019 where hardness data not available, data from nearest sampling event was used instead.  See written report for further description.
+-   In the future it will be important to be able to read in final data directly from the EPA institutional archive, in its most static version. 
+
+-   In cases 2019 where hardness data not available, data from nearest sampling event was used instead. See written report for further description.
 
 <br>
 
-***
+------------------------------------------------------------------------
 
 ### Data Read in and preparation
 
@@ -140,14 +142,26 @@ tbl <- tbl%>%
 
 ```
 
-
 <br>
 
-***
+Export hardness values for use in the script "calcium_magnesium_historical_data.Rmd"
+```{r}
+hardness_tbl <- tbl %>%
+  select(site,date,waterbody_type,hardness_mgL_1,hardness_mgL_2) %>%
+  pivot_longer(cols = c("hardness_mgL_1","hardness_mgL_2"), names_to = "obs", values_to = "val") %>%
+  filter(!is.na(val))
+
+write.csv(hardness_tbl,"output/hardness_2019_2020.csv", row.names = F)
+  
+```
+
+
+------------------------------------------------------------------------
 
 ### Duplicate sample % differences
 
 Calculate RDL values for Zn and Cu duplicate samples
+
 ```{r}
 tbl <- tbl %>%
   ## copper rdl
@@ -180,6 +194,7 @@ datatable(rdl_tbl,
 <br>
 
 What was the average percent difference for duplicate samples?
+
 ```{r}
 z <- rdl_tbl %>%
   gather(key = rdl, val = val, "Copper RDL(%)","Zinc RDL(%)") %>%
@@ -197,7 +212,7 @@ z
 
 <br>
 
-***
+------------------------------------------------------------------------
 
 ### Raw Data Table
 
@@ -219,10 +234,9 @@ datatable(tbl,
 
 <br>
 
-***
+------------------------------------------------------------------------
 
 ### Map
-
 
 ```{r}
 # add site identifier
@@ -241,6 +255,7 @@ write.csv(tbl, "output/CuZn_2019_2020_results.csv", row.names = F)
 <br>
 
 #### Site coordinates
+
 ```{r}
 cd <- coords %>%
   select(site,Habitat,Lat,Long)
@@ -250,23 +265,29 @@ datatable(cd,
           options = list(pageLength = 5, autoWidth = TRUE))
 ```
 
-
-
 <br>
 
 #### ArcGIS Online map
 
-Sampling sites and raw data on an interactive map (also at https://arcg.is/0yij15)
+Sampling sites and raw data on an interactive map (also at <https://arcg.is/0yij15>)
 
-<style>.embed-container {position: relative; padding-bottom: 80%; height: 0; max-width: 100%;} .embed-container iframe, .embed-container object, .embed-container iframe{position: absolute; top: 0; left: 0; width: 100%; height: 100%;} small{position: absolute; z-index: 40; bottom: 0; margin-bottom: -15px;}</style><div class="embed-container"><iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" title="Copper and Zinc Sampling 2019-2020, Kenai Wateshed Forum" src="//www.arcgis.com/apps/Embed/index.html?webmap=e9bf4b82cc0d4ea3a5c8724e73ae3362&extent=-151.3908,60.3307,-149.9928,60.7125&home=true&zoom=true&previewImage=false&scale=true&search=true&searchextent=true&basemap_gallery=true&disable_scroll=true&theme=light"></iframe></div>
+```{=html}
+<style>.embed-container {position: relative; padding-bottom: 80%; height: 0; max-width: 100%;} .embed-container iframe, .embed-container object, .embed-container iframe{position: absolute; top: 0; left: 0; width: 100%; height: 100%;} small{position: absolute; z-index: 40; bottom: 0; margin-bottom: -15px;}</style>
+```
+::: {.embed-container}
+<iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" title="Copper and Zinc Sampling 2019-2020, Kenai Wateshed Forum" src="//www.arcgis.com/apps/Embed/index.html?webmap=e9bf4b82cc0d4ea3a5c8724e73ae3362&amp;extent=-151.3908,60.3307,-149.9928,60.7125&amp;home=true&amp;zoom=true&amp;previewImage=false&amp;scale=true&amp;search=true&amp;searchextent=true&amp;basemap_gallery=true&amp;disable_scroll=true&amp;theme=light">
+
+</iframe>
+:::
 
 <br>
 
-***
+------------------------------------------------------------------------
 
 ### Plots
 
 Prep tables for plotting
+
 ```{r}
 # prep table
 
@@ -320,6 +341,7 @@ tbl2 <- inner_join(met_tbl,ccc_tbl) %>%
 <br>
 
 Summarise the range of metal and CCC values observed
+
 ```{r}
 dt <- tbl2 %>%
   group_by(site,metal) %>%
@@ -334,10 +356,10 @@ datatable(dt,
           options = list(pageLength = 5, autoWidth = TRUE))
 ```
 
-
 <br>
 
 #### Tributary site plots
+
 ```{r}
 ## tributaries
 trib_order <- c("Lower_No_Name_Creek",
@@ -403,10 +425,10 @@ ggsave("output/figures/zn_tribs.png")
 
 ```
 
-
 <br>
 
 #### Mainstem site plots
+
 ```{r}
 ## mainstem
 ms_order <- c("City_of_Kenai_Docks",
@@ -489,6 +511,7 @@ ggsave("output/figures/zn_ms.png")
 <br>
 
 Are copper and zinc values correlated?
+
 ```{r}
 tbl2 %>%
   ungroup() %>%
@@ -506,6 +529,4 @@ tbl2 %>%
   
 ```
 
-Relationship between copper and zinc appear to follow an approximately logistic relationship.  We would e abel to determintaively observe the relationship with the 20 year dataset.
-
-
+Relationship between copper and zinc appear to follow an approximately logistic relationship. We would we be able to determintaively observe the relationship with the full 20 year dataset?

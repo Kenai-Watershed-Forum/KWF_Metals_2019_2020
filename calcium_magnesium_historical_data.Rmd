@@ -1,0 +1,541 @@
+---
+title: "Calcium and Magnesium Historical Data"
+output:
+  html_document: 
+    df_print: paged
+    fig_width: 10
+    fig_height: 6
+    fig_caption: yes
+    code_folding: hide
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+editor_options: 
+  chunk_output_type: inline
+---
+
+Document last updated `r Sys.time()` by Benjamin Meyer ([ben\@kenaiwatershed.org](mailto:ben@kenaiwatershed.org){.email})
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+# clear environment
+rm(list=ls())
+
+# load packages
+library(tidyverse)
+library(lubridate)
+library(readr)
+library(readxl)
+library(writexl)
+library(hms)
+library(plotly)
+library(DT)
+library(xlsx)
+library(leaflet)
+library(DT)
+library(ggpubr)
+library(plotrix)
+```
+
+<br>
+
+This draft document contains a data query and summary performed to generate average hardness values for select sites included in the Kenai River Baseline Water Quality Monitoring Program (KRBWQM).
+
+<br>
+
+Notes:
+
+-   A table summarising average hardness values for select KRBWQM sites was provided to B Meyer in Nov. 2020 as part of an initial draft report on Copper and Zinc metals concentrations in the Kenai River. Summary methods and data origin were undocumented.
+
+-   To verify the origin of this data, the analysis here uses data directly from the EPA repository at waterqualitydata.us where available (2000 - 2013), as well as from results found compiled on the Kenai Watershed Forum server for results 2014-2019.
+
+-   KRBWQM data in the EPA repository 2000 - 2013 is sourced from the following query: <https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult>
+
+-   KRBWQM data found on the Kenai Watershed Forum server is found in the "data" project of this project repository at "data/Compiled_KRBWQM_data_2014_2019"
+
+-   Note: as soon as feasible, all water quality data 2014 - present will also be submitted to the EPA repository.
+
+<br>
+
+------------------------------------------------------------------------
+
+### EPA Repository Data Read-in
+
+Read in Calcium and Magnesium data from EPA repository
+
+```{r}
+
+# read in metals data 2000 - 2013
+# data sourced from the following query at EPA water quality repository:
+
+# https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult
+
+epa_dat <- read.csv("data/waterqualitydata_epa_repo_all_metals.csv")
+
+# choose variables to retain
+vars <- as.character(c(
+          "OrganizationFormalName",
+          "ActivityIdentifier",
+          "ActivityStartDate",
+          "ActivityStartTime.Time",
+          "MonitoringLocationIdentifier",
+          "ResultIdentifier",
+          "ResultDetectionConditionText",
+          "CharacteristicName",
+          "ResultSampleFractionText",
+          "ResultMeasureValue",
+          "ResultMeasure.MeasureUnitCode",
+          "MeasureQualifierCode",
+          "ResultStatusIdentifier",
+          "ResultValueTypeName"))
+
+# rename variables
+new_vars <- c("agency",
+              "activity_id",
+              "date",
+              "time",
+              "location_id",
+              "result_id",
+              "detection_qualifier_text",
+              "parameter",
+              "substance_condition",
+              "val",
+              "unit",
+              "detection_qualifier_code",
+              "result_status",
+              "result_type")
+
+# retain selected columns
+epa_dat <- epa_dat %>%
+  select(all_of(vars)) 
+
+# rename columns
+colnames(epa_dat) <- new_vars
+
+# retain ca and mg data only
+epa_dat <- epa_dat %>%
+  filter(parameter %in% c("Calcium","Magnesium"))
+
+
+
+```
+
+<br>
+
+Read in site data for Kenai River region
+
+```{r}
+
+# we want ca and mg data for KRBWQM sites only
+# examine sites
+# query available sites in the region at EPA repository:
+# https://www.waterqualitydata.us/portal/#bBox=-151.413081%2C60.292340%2C-149.215768%2C60.715224&mimeType=csv
+# (Used bounding box)
+epa_krbwqm_sites <- read.csv("data/waterqualitydata_epa_repo_sites.csv") 
+
+# retain potentially useful columns
+site_vars <- c("OrganizationFormalName",
+          "MonitoringLocationIdentifier",
+          "MonitoringLocationName",
+          "MonitoringLocationTypeName",
+          "MonitoringLocationDescriptionText",
+          "HUCEightDigitCode",
+          "DrainageAreaMeasure.MeasureValue",
+          "DrainageAreaMeasure.MeasureUnitCode",
+          "LatitudeMeasure",
+          "LongitudeMeasure",
+          "HorizontalCollectionMethodName",
+          "HorizontalCoordinateReferenceSystemDatumName",
+          "VerticalMeasure.MeasureValue",
+          "VerticalMeasure.MeasureUnitCode")
+
+# rename variables
+site_new_vars <- c("agency",
+                   "location_id",
+                   "location_name",
+                   "location_type",
+                   "location_description",
+                   "huc",
+                   "drainage_area",
+                   "drainage_area_unit",
+                   "lat",
+                   "long",
+                   "horizontal_collection_method",
+                   "horizontal_coords_system",
+                   "elevation",
+                   "elevation_unit")
+
+
+
+# retain selected columns
+epa_krbwqm_sites <- epa_krbwqm_sites %>%
+  select(all_of(site_vars)) 
+
+# rename columns
+colnames(epa_krbwqm_sites) <- site_new_vars
+```
+
+<br>
+
+Join sites with Ca/Mg data to site wqx data
+
+```{r}
+epa_dat <- left_join(epa_dat,epa_krbwqm_sites, by = c("location_id","agency"))
+```
+
+<br>
+
+What are all the different agencies that have collected Ca/Mg data in the Kenai Peninsula Borough?
+
+```{r}
+unique(epa_dat$agency)
+```
+
+<br>
+
+Retain only Kenai Watershed Forum's stream/river/lake data
+
+```{r}
+epa_dat <- epa_dat %>%
+  filter(agency == "Kenai Watershed Forum(Volunteer)*")
+```
+
+<br>
+
+Modify column classes
+
+```{r}
+# modify column classes
+epa_dat <- epa_dat %>%
+  transform(date = mdy(date),
+            time = hms::as.hms(time))
+```
+
+<br>
+
+Let's plot our data on a leaflet map to assess location data and assess if further site name QA/QC is needed
+
+Create leaflet map:
+
+```{r}
+
+leaflet(data = epa_dat) %>% 
+  addTiles() %>%
+  addMarkers(~long, 
+             ~lat,
+             popup = epa_dat$location_description)
+
+#leaflet() %>%
+#  addTiles() %>%  # Add default OpenStreetMap map tiles
+  #fitBounds(-150, 60.04,-149.0, 60.02) %>%
+  #setView(-150.210169, 60.487694, zoom = 8) %>%
+#  addMarkers(lng = all.dat$Longitude, lat = all.dat$Latitude,
+#             popup = paste("SiteID = ", all.dat$SiteID, "<br>",
+#                           "Data Source = ", all.dat$SourceName, "<br>",
+#                           "Start Year = ", all.dat$startYear, "<br>",
+#                           "End Year = ", all.dat$endYear, "<br>",
+#                           "Total Years of Data = ", all.dat$totYears, "<br>"))
+
+```
+
+<br>
+
+What are the site names remaining in the EPA data set?
+
+```{r}
+unique(epa_dat$location_description)
+```
+
+<br>
+
+------------------------------------------------------------------------
+
+### KWF Data Repository Read-in
+
+Read in data from Kenai Watershed Forum server
+
+```{r}
+# read in metals data 2014 - 2019 from compiled file found on Kenai Watershed Forum server
+kwf_dat <- read_excel("data/Compiled_KRBWQM_data_2014_2019.xlsx", sheet = "Master")
+
+# create format to match data imported from EPA repository
+kwf_dat <- kwf_dat %>%
+  filter(Parameter %in% c("Calcium","Magnesium")) %>%
+  select(-Year,-Season,-ChannelType,-Lab,-TestType) %>%
+  rename(date = Date,
+         location_description = Site,
+         parameter = Parameter,
+         val = Result,
+         unit = Units,
+         detection_qualifier_code = Code,
+         duplicate = Duplicate) %>%
+  mutate(agency = "Kenai Watershed Forum(Volunteer)*")
+
+# address ND in val column
+kwf_dat <- kwf_dat %>%
+  mutate(detection_qualifier_text = ifelse(val == "ND","Not Detected","")) %>%
+  mutate(val = na_if(val,"ND")) %>%
+  # transform column classes
+  transform(date = as.Date(date),
+            val = as.double(val))
+
+```
+
+<br>
+
+What are the site names in our KWF data set?
+
+```{r}
+unique(kwf_dat$location_description)
+```
+
+<br>
+
+Issue: Site names in the EPA data set are formatted differently than those in the KWF data set. Solution: use a matching table and left_join to resolve the differences.
+
+<br>
+
+Perform data munging to generate matching table and resolve site name differences
+
+```{r}
+# export EPA site names csv
+write.csv(unique(epa_dat$location_description),"output/site_names_table/epa_site_names.csv", row.names = F)
+
+# export KWF site names csv
+write.csv(unique(kwf_dat$location_description),"output/site_names_table/kwf_site_names.csv", row.names = F)
+
+# use the two csv files to manually match site names in a new file, "final_site_names.csv"
+
+# replace kwf location_description column with epa location_description column
+site_match_table <- read.csv("output/site_names_table/final_site_names.csv") %>%
+  rename(location_description = kwf_site_names)
+
+kwf_dat <- left_join(kwf_dat,site_match_table, by = "location_description") %>%
+  select(-location_description) %>%
+  rename(location_description = epa_site_names)
+
+```
+
+<br>
+
+------------------------------------------------------------------------
+
+### Join EPA and KWF data
+
+```{r}
+dat <- bind_rows(epa_dat,kwf_dat) %>%
+  arrange(location_description) %>%
+  fill(river_mile, .direction = "up")
+```
+
+<br>
+
+Are parameter units consistent?
+
+```{r}
+unique(dat$unit)
+```
+
+<br>
+
+Resolve unit magnitude and abbreviation convention inconsistencies. Make all units mg/L
+
+```{r}
+dat <- dat %>%
+  # resolve names
+  mutate(unit = ifelse(unit == "mg/l","mg/L",unit)) %>%
+  mutate(unit = ifelse(unit == "ug/l","ug/L",unit)) %>%
+  # resolve magnitudes
+  mutate(val = ifelse(unit == "ug/L",val*1000,val)) %>%
+  mutate(unit = ifelse(unit == "ug/L","mg/L",unit))
+```
+
+<br>
+
+***
+
+### Ca/Mg Data Exploration
+
+What is the range of our concentration values?
+
+```{r}
+summary(dat$val)
+```
+
+<br>
+
+It appears we likely have some erroneous concentration values. Lets see if we can identify them
+
+```{r}
+dat %>%
+  ggplot(aes(date,val,color = parameter)) +
+  geom_point() +
+  facet_wrap(. ~ location_description)
+
+p <- dat %>%
+  filter(location_description == "City_of_Kenai_Docks")  %>%
+  ggplot(aes(date,val,color = parameter)) +
+  geom_point()
+
+ggplotly(p)
+  
+```
+
+<br>
+
+It appears that Ca/Mg data from the City of Kenai Docks site from 2015 - 2018 is suspect, reasons unknown.
+
+For the current task at hand, we don't need City of Kenai docks data. But, this anomaly is something to be addressed in the future (e.g. if the BOR grant comes through Spring 2021...).
+
+Retain sites only pertinent to re-generating Table 6 in the DEC draft report:
+
+```{r}
+table6_sites <- c("No_Name_Creek",
+                  "Beaver_Creek",
+                  "Slikok_Creek",
+                  "Soldotna_Creek",
+                  "Skilak_Lake_Outlet",
+                  "Jims_Landing")
+
+dat_tbl6 <- dat %>%
+  filter(location_description %in% table6_sites)
+```
+
+<br>
+
+Let's examine the range of our data again, just within the sites described in Table 6 of the DEC draft report:
+
+```{r}
+dat_tbl6 %>%
+  ggplot(aes(date,val,color = parameter)) +
+  geom_point() +
+  facet_wrap(. ~ location_description)
+
+p <- dat_tbl6 %>%
+  filter(location_description == "City_of_Kenai_Docks")  %>%
+  ggplot(aes(date,val,color = parameter)) +
+  geom_point()
+
+ggplotly(p)
+```
+
+<br>
+
+It appears the trend of anomalous data is present at other sites as well, to a smaller degree of magnitude.
+
+Let's visualize our data in a different way to see how broad this trend of anomalous data extends.
+
+Plot all sites with variable y-axes
+
+```{r}
+dat %>%
+  ggplot(aes(date,val,color = parameter)) +
+  geom_point() +
+  facet_wrap(. ~ location_description, scales = "free_y")
+```
+
+<br>
+
+From the above visualization, it is readily apparent that the same trend of anomalous Ca/Mg data is consistent across all sites 2015 - 2018.
+
+To do - double check original lab results against data entry
+
+
+
+It is beyond the scope of this current draft DEC report to diagnose or potentially correct these data. Such work will be conducted at a later date in 2021 pending funding from Bureau of Restortation grant proposal.
+
+Decision: for the DEC draft report, exclude Ca/Mg data 2015 - present.
+
+Apply decision:
+```{r}
+dat <- dat %>%
+  filter(date < "2015-01-01")
+```
+
+<br>
+
+***
+
+### Summary Table
+
+Using the data discussed above, we will generate a summary of hardness values for select sites.
+
+Assign sample events to either "Spring"  or "Summer" 
+
+What unique months are included in the data set?
+```{r}
+
+# assign sample events to either "Spring" (month = 4 or 5) or "Summer" (month = 7)
+dat <- dat %>%
+  mutate(month = month(date))
+
+z <- unique(dat$month)
+
+# assign seasons
+dat <- dat %>%
+  mutate(season = ifelse(month %in% c("4","5"),"spring","summer"))
+
+```
+
+<br>
+
+Prepare to calculate hardness values
+
+Calculate hardness values by site and biannual sample event
+```{r}
+hardness <- dat %>%
+  mutate(year = year(date)) %>%
+  filter(!is.na(val)) %>%
+  group_by(year,season,river_mile,location_description,parameter) %>%
+  summarise(mean_val = mean(val),
+            n = n()) %>%
+  arrange(river_mile) %>%
+  # arrange to wider format
+  pivot_wider(names_from = parameter, values_from = mean_val) %>%
+  # calculate hardness values
+  # forula source: draft DEC report in "Clesceri, L.S., Greenberg, A.E., Eaton, A.D. (Eds.). 1998. Standard Methods for the Examination of Water and Wastewater (20th ed.), Washington D.C. American Public Health Association, American Water Works Association, and Water Environment Federation."
+  mutate(hardness = 2.497*Calcium + 4.119*Magnesium) %>%
+  select(-Calcium,-Magnesium,-n)
+  
+# table
+datatable(hardness)
+```
+<br>
+
+Summarise hardness values
+```{r}
+hardness %>%
+  filter(location_description %in% table6_sites) %>%
+  group_by(season,river_mile,location_description) %>%
+  summarise(mean_hardness = mean(hardness),
+            std_error = std.error(hardness))
+```
+<br>
+
+Plot hardness values
+```{r}
+hardness %>%
+  filter(location_description %in% table6_sites) %>%
+  ggplot(aes(location_description,hardness)) +
+  geom_boxplot() +
+  xlab("") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+<br>
+
+Plot 2019 - 2020 asynchronous hardness values in context of long term data
+```{r}
+# import 2019-2020 hardness values
+
+## working here
+```
+
+
+generate hardness values...
+
+address duplicates...
+assign each event to spring or summer sample event..
