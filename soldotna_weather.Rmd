@@ -1,0 +1,92 @@
+---
+title: "Soldotna Weather"
+output:
+  html_document: 
+    df_print: paged
+    fig_width: 10
+    fig_height: 6
+    fig_caption: yes
+    code_folding: hide
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+editor_options: 
+  chunk_output_type: inline
+---
+
+Document last updated `r Sys.time()` by Benjamin Meyer ([ben\@kenaiwatershed.org](mailto:ben@kenaiwatershed.org){.email})
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+# clear environment
+rm(list=ls())
+
+# load packages
+library(tidyverse)
+library(lubridate)
+library(readr)
+library(readxl)
+library(writexl)
+library(hms)
+library(plotly)
+library(DT)
+library(xlsx)
+library(leaflet)
+library(DT)
+library(ggpubr)
+library(plotrix)
+library(rnoaa)
+
+'%ni%' <- Negate('%in%')
+```
+
+<br>
+
+This draft document visualizes precipitation trends in the Kenai/Soldotna area
+
+<br>
+
+Kenai Airport Climate records 2019 - 2020 downloaded from https://www.ncdc.noaa.gov/
+
+Read in csv of data
+```{r}
+dat <- read.csv("data/climate_data_kenai_airport_2019_2020.csv")
+
+vars <- c("DATE","HourlyPrecipitation")
+
+dat <- dat %>%
+  select(one_of(vars)) %>%
+  
+  # convert "T" (trace) to 0.005
+  mutate(HourlyPrecipitation = str_replace_all(HourlyPrecipitation,"T","0.005")) %>%
+  transform(DATE = ymd_hms(DATE),
+            HourlyPrecipitation = as.numeric(HourlyPrecipitation)) %>%
+  # replace NA with 0
+  replace(is.na(.),0) %>%
+  
+  # summarise to daily precip
+  mutate(day = date(DATE),
+         year = year(DATE)) %>%
+  group_by(day,year) %>%
+  summarise(DailyPrecipitation = sum(HourlyPrecipitation))
+
+#  plot
+dat %>%
+  ggplot(aes(day,DailyPrecipitation)) +
+  geom_point() + 
+  geom_smooth(span = 0.15) +
+  facet_grid(. ~ year, scales = "free_x") +
+  theme_bw() +
+  xlab("") +
+  ylab("Daily Precipitation (in)") +
+  ggtitle("Soldotna Daily Mean Precipitation (Soldotna Airport, WBAN Station # 26559)")
+
+# save
+ggsave("output/figures/Soldotna_Precip_2019_2020.png", width = 11, height = 6)
+
+
+```
+

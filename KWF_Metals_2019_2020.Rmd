@@ -136,7 +136,9 @@ To do:
 
 * Ensure that all 2019 - 2020 has been submitted to DEC, including the KRBWQM data
 * Locate, format, and submit any missing data to DEC if not already present in their archive
-* For generating the 2019 - 2020 report, we will use the tables prepared in the Excel document, "AllData_ZnCuCaMg_19-20.xlsx"
-* See main RPubs document for a continuation of this analysis: https://rpubs.com/bmeyer/cu_zn_2019_2020 , using data from "AllData_ZnCuCaMg_19-20.xlsx"
+
+Decision generated from this document:
+
+For generating the 2019 - 2020 report, we will use the tables prepared in the Excel document, "AllData_ZnCuCaMg_19-20.xlsx".  See main RPubs document for a continuation of this analysis: https://rpubs.com/bmeyer/cu_zn_2019_2020 , using data from "AllData_ZnCuCaMg_19-20.xlsx"
 
 
