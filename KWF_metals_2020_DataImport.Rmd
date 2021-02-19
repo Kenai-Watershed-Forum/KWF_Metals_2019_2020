@@ -38,6 +38,8 @@ library(leaflet)
 library(DT)
 library(ggpubr)
 library(plotrix)
+
+'%ni%' <- Negate('%in%')
 ```
 
 <br>
@@ -50,13 +52,17 @@ Notes:
 
 -   Attempted to source 2019-2020 data from AWQMS formatted files found on KWF server, but was unable to locate all known 2019 - 2020 data there. See the document <https://rpubs.com/Kenai_Watershed_Forum/cu_zn_2019_2020_initial_EDA> for further discussion and recommended actions.
 
--   Next, I queried the US EPA water quality data portal.  I found Cu, Zn, Mg, and Ca data pre-2013 there at <https://www.waterqualitydata.us/portal/>, but did not yet find 2014-2020 data there. Do 2014-2020 data still need to be submitted to EPA, or do we just need a different query?
+-   Next, I queried the US EPA water quality data portal. I found Cu, Zn, Mg, and Ca data pre-2013 there at <https://www.waterqualitydata.us/portal/>, but did not yet find 2014-2020 data there. I later discovered that 2014 - 2020 has not yet been submitted to the EPA database. It is a priority to do so as soon as feasible in 2021.
 
 -   Specific query used: <https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult>
 
--   In the future it will be important to be able to read in final data directly from the EPA institutional archive, in its most static version. 
+-   In the future it will be important to be able to read in final data directly from the EPA institutional archive, in its most static version.
 
 -   In cases 2019 where hardness data not available, data from nearest sampling event was used instead. See written report for further description.
+
+-   On Feb 16, 2021, KWF received a verbal update to the QAPP regarding replicate values from Gretchen Augat and Laura Eldred (ADEC). QAPPs (and work plans) approved in 2020 specified that in cases where two replicate values exist, the higher of the two values should be used.  New guidance as of Feb. 2021 is that in cases where two replicate samples exist; one sample is designated "the sample" and the other is designated "the replicate." Relative difference level (RDL) values should still be reported where appropriate, but for data summaries analyses, only "the sample" values should be used.
+
+-   Analyses here do not reflect this new ADEC guidance, because they were not part of the original workplan.
 
 <br>
 
@@ -103,6 +109,7 @@ tbl <- tbl%>%
   mutate(copper_ccc_ugL_x = gsub("J", "", copper_ccc_ugL_x)) %>%
   mutate(copper_ccc_ugL_x = gsub("U", "", copper_ccc_ugL_x)) %>%
   mutate(copper_ccc_ugL_x = str_replace(copper_ccc_ugL_x, "\\s", "|")) %>% 
+  
   ### replace first white space with consistent character and split on that character
   separate(copper_ccc_ugL_x, into = c("copper_ccc_ugL_1", "copper_ccc_ugL_2"), sep = "\\|") %>%
   
@@ -119,6 +126,7 @@ tbl <- tbl%>%
   mutate(zinc_ccc_ugL_x = gsub("J", "", zinc_ccc_ugL_x)) %>%
   mutate(zinc_ccc_ugL_x = gsub("U", "", zinc_ccc_ugL_x)) %>%
   mutate(zinc_ccc_ugL_x = str_replace(zinc_ccc_ugL_x, "\\s", "|")) %>% 
+  
   ### replace first white space with consistent character and split on that character
   separate(zinc_ccc_ugL_x, into = c("zinc_ccc_ugL_1", "zinc_ccc_ugL_2"), sep = "\\|") %>%
   
@@ -139,12 +147,12 @@ tbl <- tbl%>%
   mutate(site = as.factor(str_replace_all(site,"-","_"))) %>%
   mutate(site = as.factor(str_replace_all(site,"'","")))
 
-
 ```
 
 <br>
 
 Export hardness values for use in the script "calcium_magnesium_historical_data.Rmd"
+
 ```{r}
 hardness_tbl <- tbl %>%
   select(site,date,waterbody_type,hardness_mgL_1,hardness_mgL_2) %>%
@@ -155,12 +163,13 @@ write.csv(hardness_tbl,"output/hardness_2019_2020.csv", row.names = F)
   
 ```
 
-
 ------------------------------------------------------------------------
 
 ### Duplicate sample % differences
 
-Calculate RDL values for Zn and Cu duplicate samples
+-   Calculate RDL values for Zn and Cu duplicate samples
+
+-   In cases where a "\_2" value exists, this is the "replicate" value
 
 ```{r}
 tbl <- tbl %>%
@@ -170,7 +179,11 @@ tbl <- tbl %>%
   
   # zinc rdl
   mutate(zn_rdl = paste(sprintf((abs(zinc_ugL_1 - zinc_ugL_2) / ((zinc_ugL_1 + zinc_ugL_2) / 2)*100), fmt = '%#.2f'),"%")) %>%
-  mutate(zn_rdl = str_replace(zn_rdl, "NA %", ""))
+  mutate(zn_rdl = str_replace(zn_rdl, "NA %", "")) 
+  
+  # ca rdl
+  
+  # mg rdl
   
 # write rdl table 
 rdl_tbl <- tbl %>%
@@ -178,10 +191,14 @@ rdl_tbl <- tbl %>%
   filter(!is.na(cu_rdl),
          cu_rdl != "") %>%
   arrange(site,date) %>%
-  select(site,date,cu_rdl,zn_rdl)
+  select(site,date,cu_rdl,zn_rdl) %>%
+  pivot_longer(cols = c("cu_rdl","zn_rdl"), values_to = "RDL") %>%
+  mutate(name = str_replace_all(name,"cu_rdl","Copper"),
+         name = str_replace_all(name,"zn_rdl","Zinc")) %>%
+  arrange(name,site,date)
 
 # rename columns
-colnames(rdl_tbl) <- c("Site","Date","Copper RDL(%)","Zinc RDL(%)")
+colnames(rdl_tbl) <- c("Site","Date","Parameter","RDL(%)")
 
 # export RDL table
 #write.csv(rdl_tbl, "output/rdl_tbl.csv", row.names = F)
@@ -197,12 +214,12 @@ What was the average percent difference for duplicate samples?
 
 ```{r}
 z <- rdl_tbl %>%
-  gather(key = rdl, val = val, "Copper RDL(%)","Zinc RDL(%)") %>%
-  mutate(val = as.numeric(gsub("%","",val))) %>%
-  mutate(Metal = gsub(" RDL(%)","",rdl)) %>%
-  group_by(Metal) %>%
-  summarise(m = mean(val),
-            se = std.error(val))
+  mutate(`RDL(%)` = str_remove(`RDL(%)`,"%")) %>%
+  transform(`RDL(%)` = as.numeric(`RDL(%)`)) %>%
+  rename(RDL_pct = `RDL...`) %>%
+  group_by(Parameter) %>%
+  summarise(mean = mean(RDL_pct),
+            se = std.error(RDL_pct))
 
 colnames(z) <- c("Metal", "Mean RDL (%)","Std. Error(%)")
 
