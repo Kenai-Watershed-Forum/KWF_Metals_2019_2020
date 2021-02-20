@@ -546,4 +546,34 @@ tbl2 %>%
   
 ```
 
-Relationship between copper and zinc appear to follow an approximately logistic relationship. We would we be able to determintaively observe the relationship with the full 20 year dataset?
+Relationship between copper and zinc appear to follow an approximately logistic relationship. Maybe we would we be able to determintaively observe the relationship with the full 20 year dataset?
+
+<br>
+
+Is there an overall temporal trend in exceedances? (Year, season...?)
+```{r}
+# facet labels
+facet_labs <- c(
+  "cu" = "Copper",
+  "zn" = "Zinc")
+
+# plot
+tbl2 %>%
+  mutate(excd = ifelse(met_val > ccc_val,"Y","N"),
+         year = year(date)) %>%
+  ggplot(aes(as.factor(date),met_val, color = excd)) +
+  geom_point() +
+  facet_grid(metal ~ year, scales = "free", labeller = labeller(metal = facet_labs)) +
+  xlab("") +
+  ylab("Concentration (ug/L)") +
+  theme_bw() +
+  cuzn_theme +
+  labs(color = "CCC Exceedance?") +
+  ggtitle("Kenai River Mainstem and Tributaries")
+
+# save
+ggsave("output/figures/overall_exceedances.png", width = 8, height = 6)
+```
+
+
+
