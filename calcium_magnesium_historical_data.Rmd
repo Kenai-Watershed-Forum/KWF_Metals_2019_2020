@@ -393,7 +393,7 @@ ggplotly(p)
 
 It appears that Ca/Mg data from the City of Kenai Docks site is potentially suspect, or some different hydrological process is occurring there. Reasons unknown. Marine influence?
 
-For the current task at hand, we don't need City of Kenai docks data. But, this anomaly is something to be addressed in the future (e.g. if the BOR grant comes through Spring 2021...).
+
 
 ```{r}
 table6_sites <- c("No_Name_Creek",
@@ -484,7 +484,7 @@ z %>%
 
 <br>
 
-Summary of CCC Values for Cu and Zn 2014 - 2018
+#### Summary of CCC Values for Cu and Zn 2014 - 2018
 ```{r}
 # summary table
 z1 <- z %>%

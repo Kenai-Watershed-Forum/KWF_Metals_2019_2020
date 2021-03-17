@@ -527,28 +527,10 @@ ggsave("output/figures/zn_ms.png")
 
 <br>
 
-Are copper and zinc values correlated?
-
-```{r}
-tbl2 %>%
-  ungroup() %>%
-  group_by(metal) %>%
-  mutate(r = row_number()) %>%
-  select(metal,met_val,r,Habitat) %>%
-  spread(key = metal, val = met_val) %>%
-  ggplot(aes(cu,zn, color = Habitat)) +
-  geom_point() + 
-  theme_classic() +
-  xlab("Copper (ug/L)") +
-  ylab("Zinc (ug/L)") +
-  xlim(0,2.5) +
-  ggtitle("Copper vs Zinc values 2019-2020")
-  
-```
-
-Relationship between copper and zinc appear to follow an approximately logistic relationship. Maybe we would we be able to determintaively observe the relationship with the full 20 year dataset?
 
 <br>
+
+#### Overall
 
 Is there an overall temporal trend in exceedances? (Year, season...?)
 ```{r}
@@ -576,4 +558,25 @@ ggsave("output/figures/overall_exceedances.png", width = 8, height = 6)
 ```
 
 
+<br>
 
+Are copper and zinc values correlated?
+
+```{r}
+tbl2 %>%
+  ungroup() %>%
+  group_by(metal) %>%
+  mutate(r = row_number()) %>%
+  select(metal,met_val,r,Habitat) %>%
+  spread(key = metal, val = met_val) %>%
+  ggplot(aes(cu,zn, color = Habitat)) +
+  geom_point(size = 2) + 
+  theme_classic() +
+  xlab("Copper (ug/L)") +
+  ylab("Zinc (ug/L)") +
+  xlim(0,2.5) +
+  ggtitle("Copper vs Zinc values 2019-2020")
+  
+```
+
+Relationship between copper and zinc appear to follow an approximately logistic relationship. Maybe we would we be able to determintaively observe the relationship with the full 20 year dataset?
