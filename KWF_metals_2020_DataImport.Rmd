@@ -52,7 +52,7 @@ Notes:
 
 -   Attempted to source 2019-2020 data from AWQMS formatted files found on KWF server, but was unable to locate all known 2019 - 2020 data there. See the document <https://rpubs.com/Kenai_Watershed_Forum/cu_zn_2019_2020_initial_EDA> for further discussion and recommended actions.
 
--   Next, I queried the US EPA water quality data portal. I found Cu, Zn, Mg, and Ca data pre-2013 there at <https://www.waterqualitydata.us/portal/>, but did not yet find 2014-2020 data there. I later discovered that 2014 - 2020 has not yet been submitted to the EPA database. It is a priority to do so as soon as feasible in 2021.
+-   Next, I queried the US EPA water quality data portal. I found Cu, Zn, Mg, and Ca data pre-2013 there at <https://www.waterqualitydata.us/portal/>, but did not yet find 2014-2020 data there. I later discovered that 2014 - 2020 has not yet been submitted to the EPA database (see <https://rpubs.com/kwf/krbwqm>). It is a high priority to elevate this data as soon as feasible in 2021.
 
 -   Specific query used: <https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult>
 
@@ -60,7 +60,7 @@ Notes:
 
 -   In cases 2019 where hardness data not available, data from nearest sampling event was used instead. See written report for further description.
 
--   On Feb 16, 2021, KWF received a verbal update to the QAPP regarding replicate values from Gretchen Augat and Laura Eldred (ADEC). QAPPs (and work plans) approved in 2020 specified that in cases where two replicate values exist, the higher of the two values should be used.  New guidance as of Feb. 2021 is that in cases where two replicate samples exist; one sample is designated "the sample" and the other is designated "the replicate." Relative difference level (RDL) values should still be reported where appropriate, but for data summaries analyses, only "the sample" values should be used.
+-   On Feb 16, 2021, KWF received a verbal update to the QAPP regarding replicate values from Gretchen Augat and Laura Eldred (ADEC). QAPPs (and work plans) approved in 2020 specified that in cases where two replicate values exist, the higher of the two values should be used. New guidance as of Feb. 2021 is that in cases where two replicate samples exist; one sample is designated "the sample" and the other is designated "the replicate." Relative difference level (RDL) values should still be reported where appropriate, but for data summaries analyses, only "the sample" values should be used.
 
 -   Analyses here do not reflect this new ADEC guidance, because they were not part of the original workplan.
 
@@ -527,12 +527,12 @@ ggsave("output/figures/zn_ms.png")
 
 <br>
 
-
 <br>
 
 #### Overall
 
 Is there an overall temporal trend in exceedances? (Year, season...?)
+
 ```{r}
 # facet labels
 facet_labs <- c(
@@ -556,7 +556,6 @@ tbl2 %>%
 # save
 ggsave("output/figures/overall_exceedances.png", width = 8, height = 6)
 ```
-
 
 <br>
 
