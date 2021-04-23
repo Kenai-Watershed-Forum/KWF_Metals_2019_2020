@@ -551,7 +551,7 @@ tbl2 %>%
   theme_bw() +
   cuzn_theme +
   labs(color = "CCC Exceedance?") +
-  ggtitle("Kenai River Mainstem and Tributaries")
+  ggtitle("All Sites")
 
 # save
 ggsave("output/figures/overall_exceedances.png", width = 8, height = 6)

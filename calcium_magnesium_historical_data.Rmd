@@ -196,7 +196,7 @@ unique(epa_dat$agency)
 
 <br>
 
-Retain only Kenai Watershed Forum's stream/river/lake data
+We will retain only Kenai Watershed Forum's stream/river/lake data.
 
 ```{r}
 epa_dat <- epa_dat %>%
@@ -205,9 +205,9 @@ epa_dat <- epa_dat %>%
 
 <br>
 
-Modify column classes
 
-```{r}
+
+```{r include =F}
 # modify column classes
 epa_dat <- epa_dat %>%
   transform(date = mdy(date),
@@ -216,9 +216,7 @@ epa_dat <- epa_dat %>%
 
 <br>
 
-Let's plot our data on a leaflet map to assess location data and assess if further site name QA/QC is needed
-
-Create leaflet map:
+Let's plot our data on a leaflet map to assess location data and assess if further site name QA/QC is needed:
 
 ```{r}
 
@@ -298,13 +296,11 @@ unique(kwf_dat$location_description)
 
 <br>
 
-Issue: Site names in the EPA data set are formatted differently than those in the KWF data set. Solution: use a matching table and left_join to resolve the differences.
-
-<br>
-
 Perform data munging to generate matching table and resolve site name differences
 
 ```{r}
+# Issue: Site names in the EPA data set are formatted differently than those in the KWF data set. Solution: use a matching table and left_join to resolve the differences.
+
 # export EPA site names csv
 write.csv(unique(epa_dat$location_description),"output/site_names_table/epa_site_names.csv", row.names = F)
 
@@ -330,9 +326,20 @@ kwf_dat <- left_join(kwf_dat,site_match_table, by = "location_description") %>%
 ### Join EPA and KWF data
 
 ```{r}
+# join, arrange, and fill in
 dat <- bind_rows(epa_dat,kwf_dat) %>%
   arrange(location_description) %>%
-  fill(river_mile, .direction = "up")
+  fill(river_mile, .direction = "up") %>%
+  left_join(site_match_table) %>%
+  select(-epa_site_names,-waterbody,-river_mile)
+
+# provide waterbody type to all sites not already designated
+site_match_table <- site_match_table %>%
+  select(-location_description) %>%
+  rename("location_description" = "epa_site_names") 
+
+dat <- left_join(dat,site_match_table)
+
 ```
 
 <br>
@@ -371,7 +378,7 @@ summary(dat$val)
 
 <br>
 
-Do we have some erroneous concentration values? Lets see if we can identify them
+Do we have some a consistent range of concentration values? Lets see if we can identify them
 
 ```{r}
 dat %>%
@@ -391,7 +398,7 @@ ggplotly(p)
 
 <br>
 
-It appears that Ca/Mg data from the City of Kenai Docks site is potentially suspect, or some different hydrological process is occurring there. Reasons unknown. Marine influence?
+It appears that Ca/Mg data from the City of Kenai Docks site is potentially suspect, or some different hydrological process is occurring there. Reasons unknown. Marine influence likely?
 
 
 
@@ -434,7 +441,7 @@ dat %>%
 Notes:
 
 
-It is beyond the scope of this current draft DEC report to diagnose (or potentially correct) these data if anomalies are genuine. Such work will be conducted at a later date in 2021 pending funding from the Bureau of Restoration grant proposal.
+It is beyond the scope of this current draft DEC report to diagnose (or potentially correct) these data if anomalies are genuine. Such work will be conducted at a later date in 2021 pending funding from the Bureau of Restoration grant proposal or other funded projects.
 
 For purposes of generating the table of long-term average Ca/Mg at a limited set of sites, we do not need the City of Kenai Docks data anyways.
 
@@ -484,7 +491,7 @@ z %>%
 
 <br>
 
-#### Summary of CCC Values for Cu and Zn 2014 - 2018
+#### Summary of CCC Values for Cu and Zn 2014 - 2018 at CoK Docks and No Name Creek
 ```{r}
 # summary table
 z1 <- z %>%
@@ -535,7 +542,7 @@ dat <- dat %>%
 
 Modify site names to conform with data structure in DEC report (e.g. "Lower" and "Upper" creek sites).
 
-All sites from data that was housed in the KWF server is from the "lower" sections; assign site names as such.
+All sites from data that was housed in the KWF server is from the "lower" sections.  Assign site names as such.
 
 ```{r eval=F, include=F}
 unique(dat$location_description)
@@ -559,7 +566,7 @@ hardness <- dat %>%
   mutate(year = year(date)) %>%
   filter(year < 2019) %>%
   filter(!is.na(val)) %>%
-  group_by(year,season,river_mile,location_description,parameter) %>%
+  group_by(year,season,river_mile,waterbody,location_description,parameter) %>%
   summarise(mean_val = mean(val),
             n = n()) %>%
   arrange(river_mile) %>%
@@ -579,8 +586,9 @@ Summarise hardness values
 
 ```{r}
 hardness %>%
+  ungroup() %>%
   #filter(location_description %in% table6_sites) %>%
-  group_by(season,river_mile,location_description) %>%
+  group_by(season,river_mile,waterbody,location_description) %>%
   filter(!is.na(hardness)) %>%
   summarise(n = n(),
             mean_hardness = sprintf("%0.2f", mean(hardness)),
@@ -594,39 +602,47 @@ hardness %>%
 Plot hardness values
 
 ```{r}
-(p <- hardness %>%
-  #filter(location_description %in% table6_sites) %>%
-  ggplot(aes(location_description,hardness, color = season)) +
-  geom_boxplot(position = position_dodge(width = 0.7)) +
-  geom_jitter(position = position_jitterdodge()) +
-  xlab("") +
-  ylab("Hardness") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Hardness values 2000 - 2018"))
+# reorder site by river mile
+hardness$location_description <- reorder(hardness$location_description, hardness$river_mile)
 
 
-# without kenai docks site
-(p <- hardness %>%
-  filter(location_description != "City_of_Kenai_Docks") %>%
-  ggplot(aes(location_description,hardness, color = season)) +
+# mainstem plot
+(p1 <- hardness %>%
+    filter(waterbody == "Mainstem") %>%
+    rename("Season" = "season") %>%
+  ggplot(aes(location_description,hardness, color = Season)) +
   geom_boxplot(position = position_dodge(width = 0.7)) +
   geom_jitter(position = position_jitterdodge()) +
+    facet_wrap(waterbody ~ ., scales = "free") +
   xlab("") +
   ylab("Hardness") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Hardness values 2000 - 2018\nWithout City of Kenai Docks site"))
+    theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(face = "bold")) )
 
-# without kenai docks site or cunningham park
-(p <- hardness %>%
-  filter(location_description != "City_of_Kenai_Docks",
-         location_description != "Cunningham_Park") %>%
-  ggplot(aes(location_description,hardness, color = season)) +
+# tributary plot
+(p2 <- hardness %>%
+    filter(waterbody == "Tributary") %>%
+    rename("Season" = "season") %>%
+  ggplot(aes(location_description,hardness, color = Season)) +
   geom_boxplot(position = position_dodge(width = 0.7)) +
   geom_jitter(position = position_jitterdodge()) +
+    facet_wrap(waterbody ~ ., scales = "free") +
   xlab("") +
   ylab("Hardness") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Hardness values 2000 - 2018\nWithout City of Kenai Docks or Cunningham Park sites"))
+    theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(face = "bold"))) 
+
+# arrange plots
+ggarrange(p1, p2,ncol = 1, nrow = 2,
+          common.legend = T,
+          legend = "bottom") %>%
+  annotate_figure(top = text_grob("2000 - 2018 Hardness Values\nKenai River Mainstem and Tributary Sites"))
+
+# export figure
+ggsave("output/figures/hardness_2000_2018.png",height = 10, width = 6)
+
 ```
 
 <br>
