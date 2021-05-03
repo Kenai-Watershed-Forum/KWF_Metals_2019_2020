@@ -1,5 +1,5 @@
 ---
-title: "Calcium and Magnesium Historical Data"
+title: "Kenai River Calcium and Magnesium Historical Data"
 output:
   html_document: 
     df_print: paged
@@ -46,15 +46,18 @@ library(plotrix)
 
 <br>
 
-This draft document contains a data query and summary performed to generate average hardness values for select sites included in the Kenai River Baseline Water Quality Monitoring Program (KRBWQM).
+### Introduction
+This draft document describes a data query and summary performed to generate average hardness values for select sites included in the Kenai River Baseline Water Quality Monitoring Program (KRBWQM) and supplemental Copper/Zinc monitoring. These hardness values are then interpreted as CCC values (criterion chronic concentration) for zinc and copper.
+
+Access full code repository for this project on GitHub at https://github.com/Kenai-Watershed-Forum/KWF_Metals_2019_2020, including a draft report in progress for the copper/zinc monitoring project.
 
 <br>
 
 Notes:
 
--   A table summarising average hardness values for select KRBWQM sites was provided to B Meyer in Nov. 2020 as part of an initial draft report on Copper and Zinc metals concentrations in the Kenai River. Summary methods and data origin were undocumented.
+-   A table summarising average hardness values for select KRBWQM sites was provided to B Meyer in Nov. 2020 as part of an initial draft report on Copper and Zinc metals concentrations in the Kenai River. Summary methods and data origin were undocumented and its purpose was unclear.
 
--   To verify the origin of this data, the analysis here instead uses data directly from the EPA repository at waterqualitydata.us where available (2000 - 2013), as well as from results found compiled on the Kenai Watershed Forum server for results 2014-2019.
+-   The analysis here instead uses data directly from the EPA repository at waterqualitydata.us where available (2000 - 2013), as well as from results found compiled on the Kenai Watershed Forum server for results 2014-2019.  
 
 -   KRBWQM data in the EPA repository 2000 - 2013 is sourced from the following query: <https://www.waterqualitydata.us/portal/#countrycode=US&statecode=US%3A02&countycode=US%3A02%3A122&sampleMedia=water&sampleMedia=Water&characteristicType=Inorganics%2C%20Major%2C%20Metals&characteristicType=Inorganics%2C%20Minor%2C%20Metals&mimeType=csv&dataProfile=narrowResult>
 
@@ -62,11 +65,14 @@ Notes:
 
 -   Note: as soon as feasible, all water quality data 2014 - present will also be submitted to the EPA repository.
 
+
 <br>
 
 ------------------------------------------------------------------------
 
-### EPA Repository Data Read-in
+### Data Read-in
+
+##### EPA Repository data
 
 Read in Calcium and Magnesium data from EPA repository
 
@@ -241,21 +247,18 @@ leaflet(data = epa_dat) %>%
 
 <br>
 
-What are the site names remaining in the EPA data set?
 
-```{r}
+
+```{r include = F}
+#What are the site names remaining in the EPA data set?
 unique(epa_dat$location_description)
 ```
 
-<br>
 
-Looks good!
 
 <br>
 
-------------------------------------------------------------------------
-
-### KWF Data Repository Read-in
+##### KWF Data Repository Read-in
 
 Read in data from Kenai Watershed Forum server
 
@@ -288,17 +291,20 @@ kwf_dat <- kwf_dat %>%
 
 <br>
 
-What are the site names in our KWF data set?
 
-```{r}
+
+```{r include = F}
+# What are the site names in our KWF data set?
 unique(kwf_dat$location_description)
 ```
 
 <br>
 
-Perform data munging to generate matching table and resolve site name differences
 
-```{r}
+
+```{r include = F}
+# Perform data munging to generate matching table and resolve site name differences
+
 # Issue: Site names in the EPA data set are formatted differently than those in the KWF data set. Solution: use a matching table and left_join to resolve the differences.
 
 # export EPA site names csv
@@ -344,17 +350,13 @@ dat <- left_join(dat,site_match_table)
 
 <br>
 
-Are parameter units consistent?
 
-```{r}
+
+```{r include = F}
+# Are parameter units consistent?
 unique(dat$unit)
-```
 
-<br>
-
-Resolve unit magnitude and abbreviation convention inconsistencies. Make all units mg/L
-
-```{r}
+# Resolve unit magnitude and abbreviation convention inconsistencies. Make all units mg/L
 dat <- dat %>%
   # resolve names
   mutate(unit = ifelse(unit == "mg/l","mg/L",unit)) %>%
@@ -370,9 +372,10 @@ dat <- dat %>%
 
 ### Ca/Mg Data Exploration
 
-What is the range of our concentration values?
 
-```{r}
+```{r include = F}
+# What is the range of our concentration values?
+
 summary(dat$val)
 ```
 
@@ -384,13 +387,22 @@ Do we have some a consistent range of concentration values? Lets see if we can i
 dat %>%
   ggplot(aes(date,val,color = parameter)) +
   geom_point() +
-  facet_wrap(. ~ location_description)
+  facet_wrap(. ~ location_description)+
+  ylab("Concentration (mg/L)")
+
+```
+
+<br>
+
+It appears that Ca/Mg data from the City of Kenai Docks site is potentially affected by some hydrological process. Marine influence likely? Lets examine it more closely:
+```{r}
 
 p <- dat %>%
   filter(location_description == "City_of_Kenai_Docks")  %>%
   ggplot(aes(date,val,color = parameter)) +
   geom_point() +
-  ggtitle("City of Kenai Docks")
+  ggtitle("City of Kenai Docks Ca/Mg concentrations") +
+  ylab("Concentration (mg/L)")
 
 ggplotly(p)
   
@@ -398,105 +410,87 @@ ggplotly(p)
 
 <br>
 
-It appears that Ca/Mg data from the City of Kenai Docks site is potentially suspect, or some different hydrological process is occurring there. Reasons unknown. Marine influence likely?
 
 
-
-```{r}
-table6_sites <- c("No_Name_Creek",
-                  "Beaver_Creek",
-                  "Slikok_Creek",
-                  "Soldotna_Creek",
-                  "Skilak_Lake_Outlet",
-                  "Jims_Landing")
-
-dat_tbl6 <- dat %>%
-  filter(location_description %in% table6_sites)
-```
 
 <br>
 
-Let's examine the range of our data again, just within the sites described in Table 6 of the draft DEC report:
-
-```{r}
-dat_tbl6 %>%
-  ggplot(aes(date,val,color = parameter)) +
-  geom_point() +
-  facet_wrap(. ~ location_description)
-
-```
-
-<br>
-
-Let's visualize our data in a different way to see is any other anomalies exist.
-
-Plot all sites with variable y-axes:
+Next, let's visualize our data as CCC values, and with variable y-axes to see is any other anomalies exist.
 
 ```{r}
 dat %>%
   ggplot(aes(date,val,color = parameter)) +
   geom_point() +
-  facet_wrap(. ~ location_description, scales = "free_y")
+  facet_wrap(. ~ location_description, scales = "free_y") +
+  ylab("Concentration (mg/L)") +
+  ggtitle("Ca/Mg concentrations")
 ```
 Notes:
 
 
-It is beyond the scope of this current draft DEC report to diagnose (or potentially correct) these data if anomalies are genuine. Such work will be conducted at a later date in 2021 pending funding from the Bureau of Restoration grant proposal or other funded projects.
-
-For purposes of generating the table of long-term average Ca/Mg at a limited set of sites, we do not need the City of Kenai Docks data anyways.
-
+It is beyond the scope of this current draft DEC report to diagnose (or potentially correct) these data if any anomalies are present. Such work will be conducted at a later date in 2021 pending funding from the Bureau of Restoration grant proposal or other funded projects.
 
 <br>
 
-Examine two sites in greater detail:
-
--   Lower No Name Creek
-
--   Kenai City Docks
+Plot CCC values for all sites
 
 ```{r}
-sites <- c("No_Name_Creek","City_of_Kenai_Docks")
+#sites <- c("No_Name_Creek","City_of_Kenai_Docks")
 
-# make for only < 2018???
 
 
 # plot raw Ca and Mg values
-dat %>%
-  filter(location_description %in% sites) %>%
-  ggplot(aes(date,val,color = parameter)) +
-  geom_point() +
-  facet_wrap(. ~ location_description, scales = "free_y") +
-  ggtitle("Ca and Mg Values 2014 - 2018")
+#dat %>%
+  #filter(location_description %in% sites) %>%
+#  ggplot(aes(date,val,color = parameter)) +
+#  geom_point() +
+#  facet_wrap(. ~ location_description, scales = "free_y") +
+#  ggtitle("Raw Ca and Mg Values 2000 - 2018")
 
 # plot CCC values for Cu and Zn w/ all available data for odd sites
-z <- dat %>%
-  filter(location_description %in% sites,
-         duplicate != "Y", 
+hardness_ccc_vals <- dat %>%
+  filter(
+    #location_description %in% sites,
          date < "2019-01-01") %>%
+         
+         # Address replicate observations
+         # Many of the replicate samples are not designated as such.  As a temporary solution, we will simply take the average wherever two values of the same parameter were collcted on the same date.
+         group_by(date,parameter,unit,location_description) %>%
+         summarize(val = mean(val)) %>% 
+
   select(date,location_description,parameter,val,unit) %>%
   pivot_wider(names_from = parameter, values_from = val) %>%
+  
+  # calculate hardness values
+  # forula source: draft DEC report in "Clesceri, L.S., Greenberg, A.E., Eaton, A.D. (Eds.). 1998. Standard Methods for the Examination of Water and Wastewater (20th ed.), Washington D.C. American Public Health Association, American Water Works Association, and Water Environment Federation."
   mutate(hardness = 2.487*Calcium + 4.119*Magnesium,
          Cu_CCC = exp(0.8545*log(hardness) - 1.702) * 0.96,
          Zn_CCC = exp(0.8473*log(hardness) - 0.884) * 0.986) %>%
-  select(-Calcium,-Magnesium,-hardness) %>%
+  select(-Calcium,-Magnesium) %>%
   pivot_longer(cols = c("Cu_CCC","Zn_CCC"), values_to = "CCC")
 
-# plot CCC values for two sites
-z %>%
+# plot CCC values for all sites
+p <- hardness_ccc_vals %>%
   ggplot(aes(date,CCC,color = name)) +
   geom_point() +
   facet_wrap(. ~ location_description, scales = "free_y") +
-  ggtitle("CCC Values for Cu and Zn, 2014 - 2018")
+  ggtitle("CCC (Criterion Chronic Concentration) Values\nfor Cu and Zn, 2000 - 2018")
+
+ggplotly(p)
+
 ```
 
 <br>
 
-#### Summary of CCC Values for Cu and Zn 2014 - 2018 at CoK Docks and No Name Creek
+***
+
+#### Summary table of hardness and CCC Values for Cu and Zn 2000 - 2018 
 ```{r}
 # summary table
-z1 <- z %>%
+z1 <- hardness_ccc_vals %>%
   group_by(location_description,name) %>%
-  summarise(mean_CCC = mean(CCC),
+  summarise(min_hardness = min(hardness),
+            max_hardness = max(hardness),
             min_CCC = min(CCC),
             max_CCC = max(CCC),
             min_date = min(date),
@@ -504,7 +498,8 @@ z1 <- z %>%
 
 z1 %>%
   datatable() %>%
-  formatRound(columns=c('mean_CCC', 
+  formatRound(columns=c('min_hardness',
+                        'max_hardness',
                         'min_CCC',
                         'max_CCC'), digits=3)
 
@@ -516,24 +511,16 @@ z1 %>%
 
 ------------------------------------------------------------------------
 
-### Summary Table
+### Boxplots of hardness and CCC Values 2000 - 2018
 
-Using the data discussed above, we will generate a summary of hardness values for all sites.
 
-Assign sample events to either "Spring" or "Summer"
+```{r include = F}
 
-What unique months are included in the data set?
-
-```{r}
+# Assign sample events to either "Spring" or "Summer". What unique months are included in the data set?
 
 # assign sample events to either "Spring" (month = 4 or 5) or "Summer" (month = 7)
-dat <- dat %>%
-  mutate(month = month(date))
-
-(z <- unique(dat$month))
-
-# assign seasons
-dat <- dat %>%
+hardness_ccc_vals <- hardness_ccc_vals %>%
+  mutate(month = month(date)) %>%
   mutate(season = ifelse(month %in% c("4","5"),"spring","summer"))
 
 ```
@@ -547,7 +534,7 @@ All sites from data that was housed in the KWF server is from the "lower" sectio
 ```{r eval=F, include=F}
 unique(dat$location_description)
 
-z <- dat %>%
+hardness_ccc_vals <- hardness_ccc_vals %>%
   mutate(location_description = str_replace_all(
     location_description,c("Beaver_Creek" = "0",
                            "Soldotna_Creek" = "0")))
@@ -556,58 +543,24 @@ z <- dat %>%
 
 <br>
 
-Prepare to calculate hardness values
+##### Plot hardness and CCC values 2000 - 2018
 
-Calculate hardness values by site and biannual sample event
-
-```{r}
-# hardness 2000 - 2018
-hardness <- dat %>%
-  mutate(year = year(date)) %>%
-  filter(year < 2019) %>%
-  filter(!is.na(val)) %>%
-  group_by(year,season,river_mile,waterbody,location_description,parameter) %>%
-  summarise(mean_val = mean(val),
-            n = n()) %>%
-  arrange(river_mile) %>%
-  
-  # arrange to wider format
-  pivot_wider(names_from = parameter, values_from = mean_val) %>%
-  # calculate hardness values
-  # forula source: draft DEC report in "Clesceri, L.S., Greenberg, A.E., Eaton, A.D. (Eds.). 1998. Standard Methods for the Examination of Water and Wastewater (20th ed.), Washington D.C. American Public Health Association, American Water Works Association, and Water Environment Federation."
-  mutate(hardness = 2.497*Calcium + 4.119*Magnesium) %>%
-  select(-Calcium,-Magnesium,-n) 
-  
-```
-
-<br>
-
-Summarise hardness values
+Hardness values
 
 ```{r}
-hardness %>%
-  ungroup() %>%
-  #filter(location_description %in% table6_sites) %>%
-  group_by(season,river_mile,waterbody,location_description) %>%
-  filter(!is.na(hardness)) %>%
-  summarise(n = n(),
-            mean_hardness = sprintf("%0.2f", mean(hardness)),
-            std_error = sprintf("%0.2f", std.error(hardness))) %>%
-  mutate("Hardness (mg/L) (Mean ± Std. Error)" = paste(mean_hardness,"±",std_error)) %>%
-  select(-mean_hardness,-std_error)
-```
 
-<br>
+## reassign site info
+z <- dat %>%
+  distinct(waterbody,location_description,river_mile)
 
-Plot hardness values
+hardness_ccc_vals <- left_join(hardness_ccc_vals,z)
 
-```{r}
 # reorder site by river mile
-hardness$location_description <- reorder(hardness$location_description, hardness$river_mile)
+hardness_ccc_vals$location_description <- reorder(hardness_ccc_vals$location_description, hardness_ccc_vals$river_mile)
 
 
-# mainstem plot
-(p1 <- hardness %>%
+# mainstem hardness plot
+(p1 <- hardness_ccc_vals %>%
     filter(waterbody == "Mainstem") %>%
     rename("Season" = "season") %>%
   ggplot(aes(location_description,hardness, color = Season)) +
@@ -615,13 +568,14 @@ hardness$location_description <- reorder(hardness$location_description, hardness
   geom_jitter(position = position_jitterdodge()) +
     facet_wrap(waterbody ~ ., scales = "free") +
   xlab("") +
-  ylab("Hardness") +
+  ylab("Hardness (mg/L)") +
     theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        strip.text = element_text(face = "bold")) )
+        strip.text = element_text(face = "bold")) ) +
+  ggtitle("Kenai River main stem hardness values 2000 - 2018")
 
-# tributary plot
-(p2 <- hardness %>%
+# tributary hardness plot
+(p2 <- hardness_ccc_vals %>%
     filter(waterbody == "Tributary") %>%
     rename("Season" = "season") %>%
   ggplot(aes(location_description,hardness, color = Season)) +
@@ -629,11 +583,16 @@ hardness$location_description <- reorder(hardness$location_description, hardness
   geom_jitter(position = position_jitterdodge()) +
     facet_wrap(waterbody ~ ., scales = "free") +
   xlab("") +
-  ylab("Hardness") +
+  ylab("Hardness (mg/L)") +
     theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        strip.text = element_text(face = "bold"))) 
+        strip.text = element_text(face = "bold"))) +
+  ggtitle("Kenai River tributaries hardness values 2000 - 2018")
 
+```
+
+
+```{r include = F}
 # arrange plots
 ggarrange(p1, p2,ncol = 1, nrow = 2,
           common.legend = T,
@@ -647,9 +606,46 @@ ggsave("output/figures/hardness_2000_2018.png",height = 10, width = 6)
 
 <br>
 
-Plot 2019 - 2020 asynchronous hardness values in context of long term data
+CCC values
+```{r}
+# mainstem CCC plot
+(p1 <- hardness_ccc_vals %>%
+    filter(waterbody == "Mainstem") %>%
+    rename("Season" = "season") %>%
+  ggplot(aes(location_description,CCC, color = Season)) +
+  geom_boxplot(position = position_dodge(width = 0.7)) +
+  geom_jitter(position = position_jitterdodge()) +
+    facet_wrap(waterbody ~ ., scales = "free") +
+  xlab("") +
+  ylab("CCC (mg/L)") +
+    theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(face = "bold")) ) +
+  ggtitle("Kenai River main stem CCC values 2000 - 2018")
+
+# tributary hardness plot
+(p2 <- hardness_ccc_vals %>%
+    filter(waterbody == "Tributary") %>%
+    rename("Season" = "season") %>%
+  ggplot(aes(location_description,CCC, color = Season)) +
+  geom_boxplot(position = position_dodge(width = 0.7)) +
+  geom_jitter(position = position_jitterdodge()) +
+    facet_wrap(waterbody ~ ., scales = "free") +
+  xlab("") +
+  ylab("CCC (mg/L)") +
+    theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(face = "bold"))) +
+  ggtitle("Kenai River tributaries CCC values 2000 - 2018")
+```
+
+
 
 ```{r eval=F, include=F}
+
+# Plot 2019 - 2020 asynchronous hardness values in context of long term data
+
+
 # import 2019-2020 hardness values
 hardness_19_20 <- read.csv("output/hardness_2019_2020.csv") %>%
   # prep columns to same format as long-term hardness data
@@ -666,6 +662,4 @@ hardness_19_20 <- read.csv("output/hardness_2019_2020.csv") %>%
 
 ```
 
-generate hardness values...
 
-address duplicates... assign each event to spring or summer sample event..
